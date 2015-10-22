@@ -57,7 +57,7 @@ taskManager.task(CHANGELOG_WRITE, function (done) {
   }
 })
 
-taskManager.task('changelog:commit', function () {
+taskManager.task(CHANGELOG_COMMIT, function () {
   if (isDryRun) {
     return true
   } else {

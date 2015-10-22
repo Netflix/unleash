@@ -1,6 +1,6 @@
 {
   "name": "unleash",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "description": "Unleash your code into the wild yonder",
   "scripts": {
     "lint": "eslint index.js ./lib && jscs index.js ./lib",
@@ -33,7 +33,6 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "1.1.1",
-    "conventional-changelog": "0.0.17",
     "fancy-log": "1.1.0",
     "gulp-babel": "5.3.0",
     "gulp-bump": "1.0.0",
@@ -45,6 +44,7 @@
     "lodash.merge": "3.3.2",
     "lodash.partial": "3.1.1",
     "lodash.template": "3.6.2",
+    "nf-conventional-changelog": "1.0.0",
     "npm": "2.14.8",
     "npm-check": "4.1.2",
     "object-values": "1.0.0",
