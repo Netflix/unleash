@@ -97,6 +97,8 @@ taskManager.task('changelog:commit', function () {
 })
 
 if (!module.parent) {
+  log(colors.yellow('=== UNLEASH ==='))
+
   const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
     return y.option(shortFlag, {
              alias:    VersionFlagMap[shortFlag],
