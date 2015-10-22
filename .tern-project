@@ -1,0 +1,15 @@
+{
+    "libs": [
+        "ecma6",
+        "ecma5"
+    ],
+    "loadEagerly": [
+        "./node_modules/chalk/index.js",
+        "./node_modules/undertaker/index.js",
+        "./node_modules/conventional-changelog/index.js",
+        "./lib/*.js"
+    ],
+    "plugins": {
+        "node": {}
+    }
+}
