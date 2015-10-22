@@ -1,21 +1,3 @@
-<a name"1.1.0"></a>
-## 1.1.0 (2015-10-22)
-
-
-#### Bug Fixes
-
-* **dryrun:** Prevent filestream from executing ([3e77d2d0](https://github.com/jameswomack/unleash/commit/3e77d2d0))
-
-
-<a name"1.1.0"></a>
-## 1.1.0 (2015-10-22)
-
-
-#### Bug Fixes
-
-* **dryrun:** Prevent filestream from executing ([3e77d2d0](https://github.com/jameswomack/unleash/commit/3e77d2d0))
-
-
 <a name"1.0.9"></a>
 ### 1.0.9 (2015-10-22)
 
