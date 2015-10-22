@@ -1,3 +1,19 @@
+<a name"1.1.0"></a>
+## 1.1.0 (2015-10-22)
+
+
+#### Bug Fixes
+
+* **dryrun:**
+  * Initialize isDryRun with yargs ([5b990595](https://github.com/jameswomack/unleash/commit/5b990595))
+  * Prevent filestream from executing ([d16baf1a](https://github.com/jameswomack/unleash/commit/d16baf1a))
+
+
+#### Features
+
+* **cli:** Add header ([cc3f1fd3](https://github.com/jameswomack/unleash/commit/cc3f1fd3))
+
+
 <a name"1.0.9"></a>
 ### 1.0.9 (2015-10-22)
 
