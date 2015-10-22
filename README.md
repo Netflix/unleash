@@ -24,7 +24,7 @@ unleash -M
 unleash -m -r stash
 ```
 
-### Git Commit Convention [Examples]((https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md)
+### Git Commit Convention [Examples](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md)
 ```
 perf(pencil): remove graphiteWidth option
 fix(graphite): stop graphite breaking when width < 0.1
