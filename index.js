@@ -12,7 +12,7 @@ const
 
 // Module-level CLI globals
 var
-  isTrial = false,
+  isDryRun = false,
   versionType,
   repoType
 
@@ -47,7 +47,7 @@ taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
   log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
 
-  if (isTrial === true) {
+  if (isDryRun === true) {
     return done()
   } else {
     return writeChangelog({
@@ -58,7 +58,7 @@ taskManager.task(CHANGELOG_WRITE, function (done) {
 })
 
 taskManager.task('changelog:commit', function () {
-  if (isTrial) {
+  if (isDryRun) {
     return true
   } else {
     // TODO - allow configuration of this src?
@@ -75,7 +75,6 @@ taskManager.task('changelog:commit', function () {
         bumpTaskName   = bumperize(bumpType)
 
   function noTrial () {
-    isTrial = false
     return deployWithBump({ dryRun : false })
   }
 
@@ -87,7 +86,6 @@ taskManager.task('changelog:commit', function () {
   taskManager.task(join(CHANGELOG_WRITE, bumpType), taskManager.series([CHANGELOG_WRITE]))
 
   function dryRun () {
-    isTrial = true
     return deployWithBump({ dryRun: true })
   }
 
@@ -99,6 +97,8 @@ taskManager.task('changelog:commit', function () {
 })
 
 if (!module.parent) {
+  log(colors.yellow('=== UNLEASH ==='))
+
   const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
     return y.option(shortFlag, {
              alias:    VersionFlagMap[shortFlag],
@@ -136,7 +136,13 @@ if (!module.parent) {
     var taskName = bumperize(unleash.type)
     versionType = unleash.type
     repoType = unleash.repoType
-    unleash.dryRun && (taskName = join(taskName, DRY_RUN))
+
+    if (unleash.dryRun) {
+      isDryRun = true
+      taskName = join(taskName, DRY_RUN)
+      log('Utilizing dry run mode')
+    }
+
     const task = taskManager.task(taskName)
     task()
   } else {
