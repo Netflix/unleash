@@ -15,10 +15,21 @@ Unleash always works with commits instead of files in your working copy to ensur
 ```
 unleash -p -d
 ```
+
+![](https://raw.githubusercontent.com/jameswomack/unleash/bd4eeedb742dc099a8545879924c270b915deb5b/screens/dry-run.png)
+
+#### Execute a Patch Release
+```
+unleash -p
+```
+![](https://raw.githubusercontent.com/jameswomack/unleash/683c4cea7a0ed58d733b51cf20a15bdf9fb563c4/screens/run.png)
+
+
 #### Execute a Major Release
 ```
 unleash -M
 ```
+
 #### Execute a Minor Release to a Stash Repository
 ```
 unleash -m -r stash
