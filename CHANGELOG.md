@@ -1,3 +1,12 @@
+<a name="1.1.1"></a>
+### 1.1.1 (2016-03-07)
+
+
+#### Bug Fixes
+
+* **CHANGELOG:** Use Netflix fork of CCL ([bd4eeedb](https://github.com/jameswomack/unleash/commit/bd4eeedb))
+
+
 <a name="1.1.0"></a>
 ## 1.1.0 (2015-10-22)
 
