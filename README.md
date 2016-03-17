@@ -73,5 +73,11 @@ npm i unleash -DE
 <img src="https://c2.staticflickr.com/4/3738/11674920374_34acde064b_b.jpg" width="400">
 
 ### Potential Next Steps
+* Integrate logo, color scheme and better marketing language in this document
+* Introduce "In the Wild" section
+* Add pertinent badges such as build status
+* Improve dry run by showing a pretty diff of changes that'd occur, including actual file contents
+* Make option flags clearer
+* Guess which type of release should happen based on commit messages
 * Check for outdated & unused dependencies
 * Check health of project against bithound
