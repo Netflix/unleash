@@ -48,6 +48,11 @@ unleash -M
 unleash -m -r stash
 ```
 
+#### View which files will be published
+```
+unleash -ls
+```
+
 ### Git Commit Convention [Examples](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md)
 ```
 perf(pencil): remove graphiteWidth option
