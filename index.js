@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+'use strict'; // force block-scoping
+
 const
   Undertaker     = require('undertaker'),
   colors         = require('chalk'),
@@ -8,7 +10,8 @@ const
   values         = require('object-values'),
   vinylFS        = require('vinyl-fs'),
   writeChangelog = require('./lib/changelog'),
-  Deploy         = require('./lib/deploy')
+  Deploy         = require('./lib/deploy'),
+  ls             = require('./lib/ls')
 
 // Module-level CLI globals
 var
@@ -55,6 +58,10 @@ taskManager.task(CHANGELOG_WRITE, function (done) {
       repoType : repoType
     }, done)
   }
+})
+
+taskManager.task('ls', function () {
+  return ls()
 })
 
 taskManager.task(CHANGELOG_COMMIT, function () {
@@ -110,6 +117,11 @@ if (!module.parent) {
       describe: 'The SemVer version type such as "patch"',
       type:     'string'
     })
+    .option('ls', {
+      alias: 'l',
+      describe: 'Prints the files and directories that will and won\'t be published',
+      type:     'boolean'
+    })
     .option('repoType', {
       alias: 'r',
       describe: 'The remote repository type such as "stash"',
@@ -133,6 +145,10 @@ if (!module.parent) {
   })
 
   if (unleash.type) {
+    if (unleash.ls) {
+      ls()
+    }
+
     var taskName = bumperize(unleash.type)
     versionType = unleash.type
     repoType = unleash.repoType
@@ -144,6 +160,9 @@ if (!module.parent) {
     }
 
     const task = taskManager.task(taskName)
+    task()
+  } else if (unleash.ls) {
+    const task = taskManager.task('ls')
     task()
   } else {
     throw new Error('Need a task homie')
