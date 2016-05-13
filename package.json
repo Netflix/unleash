@@ -1,6 +1,6 @@
 {
   "name": "unleash",
-  "version": "1.1.1-beta.0",
+  "version": "1.1.2",
   "description": "Unleash your code into the wild yonder",
   "scripts": {
     "lint": "eslint index.js ./lib && jscs index.js ./lib",
@@ -48,6 +48,7 @@
     "npm": "2.14.8",
     "npm-check": "4.1.2",
     "object-values": "1.0.0",
+    "paqman": "1.0.0",
     "semver": "5.0.3",
     "undertaker": "0.12.1",
     "vinyl-fs": "2.2.1",

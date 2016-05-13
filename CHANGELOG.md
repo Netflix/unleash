@@ -1,3 +1,12 @@
+<a name="1.1.2"></a>
+### 1.1.2 (2016-04-07)
+
+
+#### Bug Fixes
+
+* **semver:** Fix pkg path issue ([b4c96c70](https://github.com/jameswomack/unleash/commit/b4c96c70))
+
+
 <a name="1.1.1"></a>
 ### 1.1.1 (2016-03-07)
 
