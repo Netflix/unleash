@@ -12,6 +12,7 @@
 * Publishes your module to NPM
 * Pushes your code and tags to git
 * Supports both Github & Stash (creates links to these in your changelog)
+* Allows you to preview what files will and won't be published to NPM
 
 ### Convince your manager (Why use Unleash?)
 * Unleash eats it's own dogfood. Unleash is used to release itself.
