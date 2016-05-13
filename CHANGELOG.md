@@ -1,3 +1,14 @@
+<a name="1.2.0"></a>
+## 1.2.0 (2016-05-13)
+
+
+#### Features
+
+* **cli:**
+  * List files to be published ([c5097914](https://github.com/jameswomack/unleash/commit/c5097914))
+  * Initialize the Unleash CLI ([286b2f3c](https://github.com/jameswomack/unleash/commit/286b2f3c))
+
+
 <a name="1.1.2"></a>
 ### 1.1.2 (2016-04-07)
 
