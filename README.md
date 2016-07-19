@@ -26,12 +26,20 @@
 ```
 unleash -p -d
 ```
+OR...
+```
+unleash --patch --dry-run
+```
 
 ![](https://raw.githubusercontent.com/jameswomack/unleash/bd4eeedb742dc099a8545879924c270b915deb5b/screens/dry-run.png)
 
 #### Execute a Patch Release
 ```
 unleash -p
+```
+OR...
+```
+unleash --patch
 ```
 ![](https://raw.githubusercontent.com/jameswomack/unleash/683c4cea7a0ed58d733b51cf20a15bdf9fb563c4/screens/run.png)
 
@@ -40,15 +48,30 @@ unleash -p
 ```
 unleash -M
 ```
+OR...
+```
+unleash --major
+```
 
 #### Execute a Minor Release to a Stash Repository
 ```
 unleash -m -r stash
 ```
+OR...
+```
+unleash --minor --repo-type stash
+```
 
-#### View which files will be published
+#### View which files will be published to NPM
+This can be helpful in ensuring your package is being published with the least
+amount of files possible, while also ensuring you have all the files you need.
+We use this to eliminate files like .eslintrc and .tern-project.
 ```
 unleash -ls
+```
+OR...
+```
+unleash --list-publishables
 ```
 
 ### Git Commit Convention [Examples](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md)
@@ -61,18 +84,24 @@ feat(pencil): add 'graphiteWidth' option
 ### Installation
 
 ```
+# Global w/ latest stable release
 npm i unleash -g
 ```
 OR...
 ```
+# Locally saved w/ exact version
 npm i unleash -DE
 ```
 
 ### Supported Version Types
-* Major **-M**
-* Minor **-m**
-* Patch **-p**
-* Prerelease **-P**
+* Major **-M** | **--major**
+  * E.g. `"2.6.4"` => `"3.0.0"`
+* Minor **-m** | **--minor**
+  * E.g. `"2.6.4"` => `"2.7.0"`
+* Patch **-p** | **--patch**
+  * E.g. `"2.6.4"` => `"2.6.5"`
+* Prerelease **-P** | **--prerelease**
+  * E.g. `"2.6.4-beta.0"` => `"2.6.4-beta.1"`
 
 <img src="https://c2.staticflickr.com/4/3738/11674920374_34acde064b_b.jpg" width="400">
 
