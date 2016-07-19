@@ -1,8 +1,6 @@
-# Unleash
+![Bad Release](https://cloud.githubusercontent.com/assets/77849/16959116/498ef28a-4d98-11e6-8d99-6fb08aa1d1c4.gif)
 
 ## Professionally publish your JavaScript modules in one keystroke
-
-![Bad Release](https://c1.staticflickr.com/3/2355/2417329091_b31158ce8c.jpg)
 
 
 ### Key Features
