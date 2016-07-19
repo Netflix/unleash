@@ -122,13 +122,14 @@ if (!module.parent) {
       describe: 'Prints the files and directories that will and won\'t be published',
       type:     'boolean'
     })
-    .option('repoType', {
+    .option('repo-type', {
       alias: 'r',
       describe: 'The remote repository type such as "stash"',
       default:  'github',
       type:     'string'
     })
     .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
+    .alias('list-publishables', 'ls')
     .help('h').alias('h', 'help')
     .argv
 

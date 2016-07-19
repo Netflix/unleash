@@ -1,2 +1,8 @@
-/screens
+/.eslintrc
+/.jscsrc
+/.tern-project
+/.travis.yml
 /roadmap.md
+/screens
+/tests/single-runner.js
+/tests/specs/index.js
