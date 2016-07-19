@@ -1,6 +1,6 @@
 {
   "name": "unleash",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Unleash your code into the wild yonder",
   "scripts": {
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
