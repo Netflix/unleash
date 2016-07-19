@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-'use strict'; // force block-scoping
+'use strict' // force block-scoping
 
 const
   Undertaker     = require('undertaker'),
@@ -14,7 +14,7 @@ const
   ls             = require('./lib/ls')
 
 // Module-level CLI globals
-var
+let
   isDryRun = false,
   versionType,
   repoType
@@ -69,7 +69,7 @@ taskManager.task(CHANGELOG_COMMIT, function () {
     return true
   } else {
     // TODO - allow configuration of this src?
-    return vinylFS.src(['*.md'])
+    return vinylFS.src([ '*.md' ])
              .pipe(git.add())
              .pipe(git.commit('docs(CHANGELOG): Update changelog'))
   }
@@ -78,8 +78,8 @@ taskManager.task(CHANGELOG_COMMIT, function () {
 // bump:major, bump:minor, bump:patch
 ; versionTypes.forEach(function (bumpType) {
   const options        = { bumpType: bumpType },
-        deployWithBump = Deploy.withBumpType.bind(Deploy, options),
-        bumpTaskName   = bumperize(bumpType)
+    deployWithBump = Deploy.withBumpType.bind(Deploy, options),
+    bumpTaskName   = bumperize(bumpType)
 
   function noTrial () {
     return deployWithBump({ dryRun : false })
@@ -90,7 +90,7 @@ taskManager.task(CHANGELOG_COMMIT, function () {
     CHANGELOG_COMMIT,
     noTrial
   ]))
-  taskManager.task(join(CHANGELOG_WRITE, bumpType), taskManager.series([CHANGELOG_WRITE]))
+  taskManager.task(join(CHANGELOG_WRITE, bumpType), taskManager.series([ CHANGELOG_WRITE ]))
 
   function dryRun () {
     return deployWithBump({ dryRun: true })
@@ -108,10 +108,10 @@ if (!module.parent) {
 
   const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
     return y.option(shortFlag, {
-             alias:    VersionFlagMap[shortFlag],
-             describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
-             type:     'boolean'
-           })
+      alias:    VersionFlagMap[shortFlag],
+      describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
+      type:     'boolean'
+    })
   }, require('yargs'))
     .option('type', {
       describe: 'The SemVer version type such as "patch"',
@@ -149,7 +149,7 @@ if (!module.parent) {
       ls()
     }
 
-    var taskName = bumperize(unleash.type)
+    let taskName = bumperize(unleash.type)
     versionType = unleash.type
     repoType = unleash.repoType
 

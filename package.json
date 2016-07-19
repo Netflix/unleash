@@ -3,11 +3,11 @@
   "version": "1.2.2",
   "description": "Unleash your code into the wild yonder",
   "scripts": {
-    "lint": "eslint index.js ./lib && jscs index.js ./lib",
+    "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
     "prepublish": "npm run test",
-    "test": "npm run lint && mocha --harmony",
-    "single": "mocha --harmony --grep",
+    "test": "npm run lint && tape tests/specs/*.js | tap-difflet",
+    "test:single": "tape tests/single-runner.js | tap-difflet",
     "clean": "git clean -d -f -x"
   },
   "repository": {
@@ -54,13 +54,18 @@
     "paqman": "1.0.0",
     "semver": "5.0.3",
     "undertaker": "0.12.1",
-    "vinyl-fs": "2.2.1",
+    "vinyl-fs": "2.4.3",
     "yargs": "^3.29.0"
   },
   "devDependencies": {
-    "assert-plus": "0.1.5",
-    "eslint": "1.7.3",
-    "jscs": "2.3.5",
-    "mocha": "2.3.3"
+    "babel-eslint": "6.1.2",
+    "eslint": "3.1.1",
+    "eslint-config-netflix": "1.0.0-alpha.2",
+    "jscs": "3.0.7",
+    "tap-difflet": "0.6.0",
+    "tape": "4.6.0"
+  },
+  "config": {
+    "lint": "./*.js ./lib/*.js --fix"
   }
 }

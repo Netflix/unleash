@@ -7,8 +7,6 @@
   "disallowMultipleLineBreaks": true,
   "disallowQuotedKeysInObjects": true,
   "disallowSpaceAfterPrefixUnaryOperators": true,
-  "esnext": true, // uses jscs-dev/esprima-harmony
-  "esprima": "./node_modules/esprima-fb", // need to npm install esprima or esprima-fb, etc
   "excludeFiles": [],
   "requireCapitalizedConstructors": true,
   "requireCurlyBraces": ["if", "else", "for", "while", "do", "try", "catch"],
