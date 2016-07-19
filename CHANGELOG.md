@@ -1,3 +1,12 @@
+<a name="1.2.6"></a>
+### 1.2.6 (2016-07-19)
+
+
+#### Bug Fixes
+
+* **cli:** Change repoType to repo-type ([3cf4faa0](https://github.com/jameswomack/unleash/commit/3cf4faa0))
+
+
 <a name="1.2.3"></a>
 ### 1.2.3 (2016-07-19)
 
