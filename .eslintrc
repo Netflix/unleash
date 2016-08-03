@@ -1,3 +1,6 @@
 {
-  "extends": "netflix"
+  "extends": "netflix",
+  "rules": {
+    "prefer-rest-params": 0
+  }
 }

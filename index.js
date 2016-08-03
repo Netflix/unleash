@@ -9,6 +9,7 @@ const
   git            = require('gulp-git'),
   values         = require('object-values'),
   vinylFS        = require('vinyl-fs'),
+  ghPages        = require('./lib/gh-pages'),
   writeChangelog = require('./lib/changelog'),
   Deploy         = require('./lib/deploy'),
   ls             = require('./lib/ls')
@@ -21,6 +22,7 @@ let
 
 const
   CHANGELOG_COMMIT   = 'changelog:commit',
+  GH_PAGES_DEPLOY    = 'ghpages:deploy',
   CHANGELOG_WRITE    = 'changelog:write',
   DRY_RUN_SHORT_FLAG = 'd',
   DRY_RUN            = 'dry-run',
@@ -75,9 +77,20 @@ taskManager.task(CHANGELOG_COMMIT, function () {
   }
 })
 
+taskManager.task(GH_PAGES_DEPLOY, function (options) {
+  log('Deploying to gh-pages from ' + options.path)
+
+  if (isDryRun) {
+    return true
+  } else {
+    return vinylFS.src([ options.path ])
+             .pipe(ghPages())
+  }
+})
+
 // bump:major, bump:minor, bump:patch
 ; versionTypes.forEach(function (bumpType) {
-  const options        = { bumpType: bumpType },
+  const options    = { bumpType: bumpType },
     deployWithBump = Deploy.withBumpType.bind(Deploy, options),
     bumpTaskName   = bumperize(bumpType)
 
@@ -118,14 +131,25 @@ if (!module.parent) {
       type:     'string'
     })
     .option('ls', {
-      alias: 'l',
+      alias:    'l',
       describe: 'Prints the files and directories that will and won\'t be published',
       type:     'boolean'
     })
     .option('repo-type', {
-      alias: 'r',
+      alias:    'r',
       describe: 'The remote repository type such as "stash"',
       default:  'github',
+      type:     'string'
+    })
+    .option('ghpages-deploy', {
+      alias:    'gh',
+      describe: 'Deploy gh-pages',
+      type:     'boolean'
+    })
+    .option('ghpages-path', {
+      alias:    'ghp',
+      describe: 'The glob path to deploy to gh-pages',
+      default:  './docs/**/*',
       type:     'string'
     })
     .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
@@ -148,6 +172,11 @@ if (!module.parent) {
   if (unleash.type) {
     if (unleash.ls) {
       ls()
+    }
+
+    if (unleash.gh) {
+      const task = taskManager.task(GH_PAGES_DEPLOY)
+      task({ path : unleash.ghp })
     }
 
     let taskName = bumperize(unleash.type)
