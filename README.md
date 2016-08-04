@@ -18,7 +18,7 @@
 * Unleash encourages use of software conventions such as the CHANGELOG by making it dead easy
 * Unleash encourages you to make git commit messages that make sense to everyone in your organization
 * Unleash is constructed from battle-tested and well-understood open source modules such as vinyl-fs, yargs, chalk & semver. Additionally, the architecture of Unleash is partially based on Gulp.
-* Unleash uses the [Angular Conventional Changelog](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md) manner of using git commit conventions 
+* Unleash uses the [Angular Conventional Changelog](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md) manner of using git commit conventions
 
 
 ### CLI Examples
@@ -72,6 +72,20 @@ unleash -ls
 OR...
 ```
 unleash --list-publishables
+```
+
+#### Publish your project's documentation to Github Pages
+Manually leveraging Github's Pages feature can be tedious. You need to maintain
+a branch that's orphaned from master and yet is based on assets and/or tasks
+from master. Unleash can help by allowing you to publish files matching a quoted
+glob string to gh-pages from the comfort of the branch you normally work on.
+```
+unleash --gh
+# defaults to "./docs/**/*"
+```
+OR...
+```
+unleash --ghpages-deploy --ghpages-path "./public/**/*"
 ```
 
 ### Git Commit Convention [Examples](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md)

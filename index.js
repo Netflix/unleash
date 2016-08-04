@@ -194,6 +194,9 @@ if (!module.parent) {
   } else if (unleash.ls) {
     const task = taskManager.task('ls')
     task()
+  } else if (unleash.gh) {
+    const task = taskManager.task(GH_PAGES_DEPLOY)
+    task({ path : unleash.ghp })
   } else {
     throw new Error('Need a task homie')
   }
