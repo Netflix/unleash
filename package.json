@@ -1,12 +1,15 @@
 {
   "name": "unleash",
-  "version": "1.2.6",
+  "version": "1.3.0",
   "description": "Unleash your code into the wild yonder",
+  "engines" : {
+    "node" : ">=4.0.0"
+  },
   "scripts": {
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
     "prepublish": "npm run test",
-    "test": "npm run lint && tape tests/specs/*.js | tap-difflet",
+    "test": "npm run lint && node --harmony ./node_modules/.bin/tape tests/specs/*.js | tap-difflet",
     "test:single": "tape tests/single-runner.js | tap-difflet",
     "clean": "git clean -d -f -x"
   },
@@ -35,6 +38,7 @@
     "chalk": "1.1.1",
     "fancy-log": "1.1.0",
     "fstream-npm": "1.0.7",
+    "gift": "0.9.0",
     "glob": "7.0.3",
     "gulp-babel": "5.3.0",
     "gulp-bump": "1.0.0",
@@ -52,13 +56,18 @@
     "npm-check": "4.1.2",
     "object-values": "1.0.0",
     "paqman": "1.0.0",
+    "readable-stream": "2.1.4",
+    "rimraf": "2.5.4",
     "semver": "5.0.3",
     "undertaker": "0.12.1",
     "vinyl-fs": "2.4.3",
+    "wrap-promise": "1.0.1",
     "yargs": "^3.29.0"
   },
   "devDependencies": {
     "babel-eslint": "6.1.2",
+    "esdoc": "0.4.7",
+    "esdoc-es7-plugin": "0.0.3",
     "eslint": "3.1.1",
     "eslint-config-netflix": "1.0.0-alpha.2",
     "jscs": "3.0.7",
