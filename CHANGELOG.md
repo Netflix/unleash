@@ -1,3 +1,13 @@
+<a name="1.3.0"></a>
+## 1.3.0 (2016-08-03)
+
+
+#### Features
+
+* Add ghpages-deploy command ([4927b03c](https://github.com/netflix/unleash/commit/4927b03c))
+* **ghpages:** Init ([f3d3d954](https://github.com/netflix/unleash/commit/f3d3d954))
+
+
 <a name="1.2.6"></a>
 ### 1.2.6 (2016-07-19)
 
