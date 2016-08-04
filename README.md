@@ -13,11 +13,11 @@
 * Allows you to preview what files will and won't be published to NPM
 
 ### Convince your manager (Why use Unleash?)
-* Unleash eats it's own dogfood. Unleash is used to release itself.
+* Unleash eats it's own dogfood. Unleash is used to release itself
 * Unleash eliminates common time-wasting mistakes such as forgetting to tag your releases (or forgetting to publish your module)
 * Unleash encourages use of software conventions such as the CHANGELOG by making it dead easy
 * Unleash encourages you to make git commit messages that make sense to everyone in your organization
-* Unleash is constructed from battle-tested and well-understood open source modules such as vinyl-fs, yargs, chalk & semver. Additionally, the architecture of Unleash is partially based on Gulp.
+* Unleash is constructed from battle-tested and well-understood open source modules such as vinyl-fs, yargs, chalk & semver. Additionally, the architecture of Unleash is partially based on Gulp
 * Unleash uses the [Angular Conventional Changelog](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md) manner of using git commit conventions
 
 
