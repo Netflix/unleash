@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl">
+  <title data-ice="title">API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/netflix/unleash" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  </ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><div data-ice="index" class="github-markdown"><p><img src="https://cloud.githubusercontent.com/assets/77849/16959116/498ef28a-4d98-11e6-8d99-6fb08aa1d1c4.gif" alt="Bad Release"></p>
+<h2 id="professionally-publish-your-javascript-modules-in-one-keystroke">Professionally publish your JavaScript modules in one keystroke</h2>
+<h3 id="key-features">Key Features</h3>
+<ul>
+<li>Updates your version according to semantic versioning</li>
+<li>Runs your tests</li>
+<li>Updates your changelog</li>
+<li>Publishes your module to NPM</li>
+<li>Pushes your code and tags to git</li>
+<li>Supports both Github &amp; Stash (creates links to these in your changelog)</li>
+<li>Allows you to preview what files will and won&apos;t be published to NPM</li>
+</ul>
+<h3 id="convince-your-manager-why-use-unleash-">Convince your manager (Why use Unleash?)</h3>
+<ul>
+<li>Unleash eats it&apos;s own dogfood. Unleash is used to release itself.</li>
+<li>Unleash eliminates common time-wasting mistakes such as forgetting to tag your releases (or forgetting to publish your module)</li>
+<li>Unleash encourages use of software conventions such as the CHANGELOG by making it dead easy</li>
+<li>Unleash encourages you to make git commit messages that make sense to everyone in your organization</li>
+<li>Unleash is constructed from battle-tested and well-understood open source modules such as vinyl-fs, yargs, chalk &amp; semver. Additionally, the architecture of Unleash is partially based on Gulp.</li>
+<li>Unleash uses the <a href="https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md">Angular Conventional Changelog</a> manner of using git commit conventions </li>
+</ul>
+<h3 id="cli-examples">CLI Examples</h3>
+<h4 id="execute-a-dry-run-of-publishing-a-patch-release">Execute a Dry Run of Publishing a Patch Release</h4>
+<pre><code><code class="source-code prettyprint">unleash -p -d</code>
+</code></pre><p>OR...</p>
+<pre><code><code class="source-code prettyprint">unleash --patch --dry-run</code>
+</code></pre><p><img src="https://raw.githubusercontent.com/jameswomack/unleash/bd4eeedb742dc099a8545879924c270b915deb5b/screens/dry-run.png" alt=""></p>
+<h4 id="execute-a-patch-release">Execute a Patch Release</h4>
+<pre><code><code class="source-code prettyprint">unleash -p</code>
+</code></pre><p>OR...</p>
+<pre><code><code class="source-code prettyprint">unleash --patch</code>
+</code></pre><p><img src="https://raw.githubusercontent.com/jameswomack/unleash/683c4cea7a0ed58d733b51cf20a15bdf9fb563c4/screens/run.png" alt=""></p>
+<h4 id="execute-a-major-release">Execute a Major Release</h4>
+<pre><code><code class="source-code prettyprint">unleash -M</code>
+</code></pre><p>OR...</p>
+<pre><code><code class="source-code prettyprint">unleash --major</code>
+</code></pre><h4 id="execute-a-minor-release-to-a-stash-repository">Execute a Minor Release to a Stash Repository</h4>
+<pre><code><code class="source-code prettyprint">unleash -m -r stash</code>
+</code></pre><p>OR...</p>
+<pre><code><code class="source-code prettyprint">unleash --minor --repo-type stash</code>
+</code></pre><h4 id="view-which-files-will-be-published-to-npm">View which files will be published to NPM</h4>
+<p>This can be helpful in ensuring your package is being published with the least
+amount of files possible, while also ensuring you have all the files you need.
+We use this to eliminate files like .eslintrc and .tern-project.</p>
+<pre><code><code class="source-code prettyprint">unleash -ls</code>
+</code></pre><p>OR...</p>
+<pre><code><code class="source-code prettyprint">unleash --list-publishables</code>
+</code></pre><h3 id="git-commit-convention-examples-https-github-com-ajoslin-conventional-changelog-blob-9c359faacea93b566f19c4c7214a6bca58edf99f-conventions-angular-md-">Git Commit Convention <a href="https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md">Examples</a></h3>
+<pre><code><code class="source-code prettyprint">perf(pencil): remove graphiteWidth option
+fix(graphite): stop graphite breaking when width &lt; 0.1
+feat(pencil): add &apos;graphiteWidth&apos; option</code>
+</code></pre><h3 id="installation">Installation</h3>
+<pre><code><code class="source-code prettyprint"># Global w/ latest stable release
+npm i unleash -g</code>
+</code></pre><p>OR...</p>
+<pre><code><code class="source-code prettyprint"># Locally saved w/ exact version
+npm i unleash -DE</code>
+</code></pre><h3 id="supported-version-types">Supported Version Types</h3>
+<ul>
+<li>Major <strong>-M</strong> | <strong>--major</strong><ul>
+<li>E.g. <code>&quot;2.6.4&quot;</code> =&gt; <code>&quot;3.0.0&quot;</code></li>
+</ul>
+</li>
+<li>Minor <strong>-m</strong> | <strong>--minor</strong><ul>
+<li>E.g. <code>&quot;2.6.4&quot;</code> =&gt; <code>&quot;2.7.0&quot;</code></li>
+</ul>
+</li>
+<li>Patch <strong>-p</strong> | <strong>--patch</strong><ul>
+<li>E.g. <code>&quot;2.6.4&quot;</code> =&gt; <code>&quot;2.6.5&quot;</code></li>
+</ul>
+</li>
+<li>Prerelease <strong>-P</strong> | <strong>--prerelease</strong><ul>
+<li>E.g. <code>&quot;2.6.4-beta.0&quot;</code> =&gt; <code>&quot;2.6.4-beta.1&quot;</code></li>
+</ul>
+</li>
+</ul>
+<p><img src="https://c2.staticflickr.com/4/3738/11674920374_34acde064b_b.jpg" width="400"></p>
+</div>
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
