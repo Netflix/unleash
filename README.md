@@ -116,6 +116,9 @@ npm i unleash -DE
   * E.g. `"2.6.4"` => `"2.6.5"`
 * Prerelease **-P** | **--prerelease**
   * E.g. `"2.6.4-beta.0"` => `"2.6.4-beta.1"`
+  
+### Badge-o-rama
+![Travis badge](https://travis-ci.org/Netflix/unleash.svg)
 
 <img src="https://c2.staticflickr.com/4/3738/11674920374_34acde064b_b.jpg" width="400">
 
