@@ -2,6 +2,9 @@
   "name": "unleash",
   "version": "1.3.0",
   "description": "Unleash your code into the wild yonder",
+  "engines" : {
+    "node" : ">=4.0.0"
+  },
   "scripts": {
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
