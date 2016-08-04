@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">lib/gh-pages.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/netflix/unleash" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  </ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">lib/gh-pages.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">// Based on https://github.com/shinnn/gulp-gh-pages/blob/master/index.js
+const Transform = require(&apos;readable-stream/transform&apos;)
+const log = require(&apos;fancy-log&apos;)
+const vinylFs = require(&apos;vinyl-fs&apos;)
+const wrapPromise = require(&apos;wrap-promise&apos;)
+const git = require(&apos;./git&apos;)
+
+/*
+ * Public: Push to gh-pages branch for github
+ *
+ * options - {Object} that contains all the options of the plugin
+ *   - remoteUrl: The {String} remote url (github repository) of the project,
+ *   - origin: The {String} origin of the git repository (default to `&quot;origin&quot;`),
+ *   - branch: The {String} branch where deploy will by done (default to `&quot;gh-pages&quot;`),
+ *   - cacheDir: {String} where the git repo will be located. (default to a temporary folder)
+ *   - push: {Boolean} to know whether or not the branch should be pushed (default to `true`)
+ *   - message: {String} commit message (default to `&quot;Update [timestamp]&quot;`)
+ *
+ * Returns `Stream`.
+**/
+module.exports = function gulpGhPages(options) {
+  options = options || {}
+  const origin = options.origin || &apos;origin&apos;
+  const branch = options.branch || &apos;gh-pages&apos;
+  const message = options.message || &apos;Update &apos; + new Date().toISOString()
+
+  const files = []
+  let TAG
+
+  if (branch !== &apos;gh-pages&apos;) {
+    TAG = &apos;[gh-pages (&apos; + branch + &apos;)]&apos;
+  } else {
+    TAG = &apos;[gh-pages]&apos;
+  }
+
+  const stream = new Transform({
+    objectMode: true,
+    transform: function transform(file, enc, cb) {
+      if (file.isNull()) {
+        cb(null, file)
+        return
+      }
+
+      if (file.isStream()) {
+        cb(new Error(&apos;Stream content is not supported&apos;))
+        return
+      }
+
+      files.push(file)
+      cb(null, file)
+    },
+
+    flush: function flush(cb) {
+      if (files.length === 0) {
+        log(TAG, &apos;No files in the stream.&apos;)
+        cb()
+        return
+      }
+
+      let newBranchCreated = false
+
+      git.prepareRepo(options.remoteUrl, origin, options.cacheDir || &apos;.publish&apos;)
+      .then(function (repo) {
+        log(TAG, &apos;Cloning repo&apos;)
+        if (repo._localBranches.indexOf(branch) &gt; -1) {
+          log(TAG, &apos;Checkout branch `&apos; + branch + &apos;`&apos;)
+          return repo.checkoutBranch(branch)
+        }
+
+        if (repo._remoteBranches.indexOf(origin + &apos;/&apos; + branch) &gt; -1) {
+          log(TAG, &apos;Checkout remote branch `&apos; + branch + &apos;`&apos;)
+          return repo.checkoutBranch(branch)
+        }
+
+        log(TAG, &apos;Create branch `&apos; + branch + &apos;` and checkout&apos;)
+        newBranchCreated = true
+        return repo.createAndCheckoutBranch(branch)
+      })
+      .then(function (repo) {
+        return wrapPromise(function (resolve, reject) {
+          if (newBranchCreated) {
+            resolve(repo)
+            return
+          }
+
+          // updating to avoid having local cache not up to date
+          log(TAG, &apos;Updating repository&apos;)
+          repo._repo.git(&apos;pull&apos;, function (err) {
+            if (err) {
+              reject(err)
+              return
+            }
+
+            resolve(repo)
+          })
+        })
+      })
+      .then(function (repo) {
+        // remove all files
+        return wrapPromise(function (resolve, reject) {
+          repo._repo.remove(&apos;.&apos;, { r: true }, function (err) {
+            if (err) {
+              reject(err)
+              return
+            }
+
+            resolve(repo.status())
+          })
+        })
+      })
+      .then(function (repo) {
+        log(TAG, &apos;Copying files to repository&apos;)
+
+        return wrapPromise(function (resolve, reject) {
+          const destStream = vinylFs.dest(repo._repo.path)
+          .on(&apos;error&apos;, reject)
+          .on(&apos;end&apos;, function () {
+            resolve(repo)
+          })
+          .resume()
+
+          files.forEach(function (file) {
+            destStream.write(file)
+          })
+
+          destStream.end()
+        })
+      })
+      .then(function (repo) {
+        return repo.addFiles(&apos;.&apos;, { force: options.force || false })
+      })
+      .then(function (repo) {
+        const filesToBeCommitted = Object.keys(repo._staged).length
+
+        if (filesToBeCommitted === 0) {
+          log(TAG, &apos;No files have changed.&apos;)
+          cb()
+          return
+        }
+
+        log(TAG, &apos;Adding &apos; + filesToBeCommitted + &apos; files.&apos;)
+        log(TAG, &apos;Committing &quot;&apos; + message + &apos;&quot;&apos;)
+        repo.commit(message).then(function (newRepo) {
+          if (options.push === undefined || options.push) {
+            log(TAG, &apos;Pushing to remote.&apos;)
+            newRepo._repo.git(&apos;push&apos;, {
+              &apos;set-upstream&apos;: true
+            }, [ origin, newRepo._currentBranch ], function (err) {
+              if (err) {
+                cb(err)
+                return
+              }
+
+              cb()
+            })
+
+            return
+          }
+
+          cb()
+        }, cb)
+      })
+      .catch(function (err) {
+        setImmediate(function () {
+          cb(err)
+        })
+      })
+    }
+  })
+
+  stream.on(&apos;error&apos;, console.error.bind(console))
+  /*
+      All Readable streams begin in paused mode but can be switched to flowing mode in one of the following ways:
+
+		  * Adding a &apos;data&apos; event handler.
+		  * Calling the stream.resume() method.
+		  * Calling the stream.pipe() method to send the data to a Writable.
+   */
+
+  stream.resume()
+
+  return stream
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

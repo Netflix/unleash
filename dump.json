@@ -1,0 +1,1519 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "lib/changelog.js",
+    "memberof": null,
+    "longname": "lib/changelog.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "const\n  colors = require('chalk'),\n  log    = require('fancy-log')\n\n/**\n * This outputs change information from git commits to CHANGELOG.md\n */\nfunction writeChangelog (options, done) {\n  options.repoType = options.repoType || 'github'\n\n  log('Using repo type: ', colors.magenta(options.repoType))\n\n  const pkg = require(process.cwd() + '/package')\n\n  const opts = {\n    log: log,\n    repository: pkg.repository.url,\n    version: options.version\n  }\n\n  // Github uses \"commit\", Stash uses \"commits\"\n  if (options.repoType === 'stash') {\n    const template = require('lodash.template')\n    const partial  = require('lodash.partial')\n\n    const commitTemplate = function (repository, commit) {\n      // TODO - Make this configurable and default to Github, but include a Stash option\n      const templateFn = repository ?\n        template('[<%= commit %>](<%= repository %>/commits/<%= commit %>)') :\n        template('<%= commit %>')\n      return templateFn({\n        repository: repository,\n        commit: commit.substring(0,8) // no need to show super long hash in log\n      })\n    }\n\n    opts.commitLink = partial(commitTemplate, pkg.repository.url)\n  }\n\n  return require('nf-conventional-changelog')(opts, function (err, clog) {\n    if (err) {\n      throw new Error(err)\n    } else {\n      require('fs').writeFileSync(process.cwd() + '/CHANGELOG.md', clog)\n      return done && typeof done === 'function' && done()\n\n    }\n  })\n}\n\nmodule.exports = writeChangelog\n"
+  },
+  {
+    "__docId__": 1,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "colors",
+    "memberof": "lib/changelog.js",
+    "longname": "lib/changelog.js~colors",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/changelog.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 2,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "writeChangelog",
+    "memberof": "lib/changelog.js",
+    "longname": "lib/changelog.js~writeChangelog",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/changelog.js",
+    "importStyle": null,
+    "description": "This outputs change information from git commits to CHANGELOG.md",
+    "lineNumber": 8,
+    "params": [
+      {
+        "name": "options",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "done",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 3,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "lib/deploy.js",
+    "memberof": null,
+    "longname": "lib/deploy.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "const\n  colors  = require('chalk'),\n  log     = require('fancy-log'),\n  paqman  = require('paqman'),\n  vinylFS = require('vinyl-fs')\n\nfunction getNextVersion (type) {\n  const SemVer = require('semver')\n  const currentVersion = paqman.packageJSON.version\n  log('Getting next version of type: ', colors.magenta(type))\n  log('Incrementing from version: ', colors.magenta(currentVersion))\n  return SemVer.inc(currentVersion, type)\n}\n\nmodule.exports = Object.create({\n  getNextVersion: getNextVersion,\n\n  withBumpType: function (options0, options1) {\n    const\n      Stream         = require('stream'),\n      ChildProcess   = require('child_process'),\n      merge          = require('lodash.merge'),\n      bump           = require('gulp-bump'),\n      filter         = require('gulp-filter'),\n      git            = require('gulp-git'),\n      tagVersion     = require('gulp-tag-version')\n\n    // Allow options merge through arguments list.\n    // This is useful for bind magic\n    const options  = merge({ }, options0, options1),\n      bumpType = options.bumpType,\n      dryRun = options.dryRun\n\n    log('Utilizing bumpType',  colors.magenta(options.bumpType))\n\n    function streamDone (finalOperation) {\n      const stream = new Stream.Transform({ objectMode: true })\n\n      stream._transform = function (file, unused, callback) {\n        finalOperation()\n        callback(null, file)\n      }\n\n      return stream\n    }\n\n    log('Retrieving latest git commit...')\n\n    const\n      REF_HEAD_CMD   = 'git rev-parse --abbrev-ref HEAD',\n      CURRENT_BRANCH = ChildProcess.execSync(REF_HEAD_CMD)\n                         .toString().replace('\\n',''),\n      NEXT_VERSION   = getNextVersion(bumpType)\n\n    let fileStream = vinylFS.src([ './package.json' ])\n\n    if (!dryRun) {\n      fileStream = fileStream\n        .pipe(bump({ type: bumpType }))\n        .pipe(vinylFS.dest('./'))\n        .pipe(git.commit('chore(release): release ' + NEXT_VERSION))\n        .pipe(filter('package.json'))\n        .pipe(tagVersion())\n    }\n\n    return fileStream.pipe(streamDone(function () {\n      const\n        args   = ' --tags',\n        remote = 'origin'\n\n      if (dryRun) {\n        return log('This is a dry run. We\\'d be running git push ' +\n                              remote + ' ' + CURRENT_BRANCH + args)\n      }\n\n      return git.push(remote, CURRENT_BRANCH, { args: args }, function (error) {\n        if (error) {\n          throw error\n        }\n\n        log('Loading NPM....')\n\n        const NPM = require('npm')\n        NPM.load(function () { // must be called first\n          NPM.publish(function (pubError) {\n            if (pubError) {\n              log.error('Publish failed, your changelog may get in an undefined state :(')\n              log.error(pubError)\n              throw pubError\n            }\n          })\n        })\n      })\n    }))\n  }\n})\n"
+  },
+  {
+    "__docId__": 4,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "colors",
+    "memberof": "lib/deploy.js",
+    "longname": "lib/deploy.js~colors",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/deploy.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 5,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "getNextVersion",
+    "memberof": "lib/deploy.js",
+    "longname": "lib/deploy.js~getNextVersion",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/deploy.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 7,
+    "undocument": true,
+    "params": [
+      {
+        "name": "type",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 6,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "lib/gh-pages.js",
+    "memberof": null,
+    "longname": "lib/gh-pages.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "// Based on https://github.com/shinnn/gulp-gh-pages/blob/master/index.js\nconst Transform = require('readable-stream/transform')\nconst log = require('fancy-log')\nconst vinylFs = require('vinyl-fs')\nconst wrapPromise = require('wrap-promise')\nconst git = require('./git')\n\n/*\n * Public: Push to gh-pages branch for github\n *\n * options - {Object} that contains all the options of the plugin\n *   - remoteUrl: The {String} remote url (github repository) of the project,\n *   - origin: The {String} origin of the git repository (default to `\"origin\"`),\n *   - branch: The {String} branch where deploy will by done (default to `\"gh-pages\"`),\n *   - cacheDir: {String} where the git repo will be located. (default to a temporary folder)\n *   - push: {Boolean} to know whether or not the branch should be pushed (default to `true`)\n *   - message: {String} commit message (default to `\"Update [timestamp]\"`)\n *\n * Returns `Stream`.\n**/\nmodule.exports = function gulpGhPages(options) {\n  options = options || {}\n  const origin = options.origin || 'origin'\n  const branch = options.branch || 'gh-pages'\n  const message = options.message || 'Update ' + new Date().toISOString()\n\n  const files = []\n  let TAG\n\n  if (branch !== 'gh-pages') {\n    TAG = '[gh-pages (' + branch + ')]'\n  } else {\n    TAG = '[gh-pages]'\n  }\n\n  const stream = new Transform({\n    objectMode: true,\n    transform: function transform(file, enc, cb) {\n      if (file.isNull()) {\n        cb(null, file)\n        return\n      }\n\n      if (file.isStream()) {\n        cb(new Error('Stream content is not supported'))\n        return\n      }\n\n      files.push(file)\n      cb(null, file)\n    },\n\n    flush: function flush(cb) {\n      if (files.length === 0) {\n        log(TAG, 'No files in the stream.')\n        cb()\n        return\n      }\n\n      let newBranchCreated = false\n\n      git.prepareRepo(options.remoteUrl, origin, options.cacheDir || '.publish')\n      .then(function (repo) {\n        log(TAG, 'Cloning repo')\n        if (repo._localBranches.indexOf(branch) > -1) {\n          log(TAG, 'Checkout branch `' + branch + '`')\n          return repo.checkoutBranch(branch)\n        }\n\n        if (repo._remoteBranches.indexOf(origin + '/' + branch) > -1) {\n          log(TAG, 'Checkout remote branch `' + branch + '`')\n          return repo.checkoutBranch(branch)\n        }\n\n        log(TAG, 'Create branch `' + branch + '` and checkout')\n        newBranchCreated = true\n        return repo.createAndCheckoutBranch(branch)\n      })\n      .then(function (repo) {\n        return wrapPromise(function (resolve, reject) {\n          if (newBranchCreated) {\n            resolve(repo)\n            return\n          }\n\n          // updating to avoid having local cache not up to date\n          log(TAG, 'Updating repository')\n          repo._repo.git('pull', function (err) {\n            if (err) {\n              reject(err)\n              return\n            }\n\n            resolve(repo)\n          })\n        })\n      })\n      .then(function (repo) {\n        // remove all files\n        return wrapPromise(function (resolve, reject) {\n          repo._repo.remove('.', { r: true }, function (err) {\n            if (err) {\n              reject(err)\n              return\n            }\n\n            resolve(repo.status())\n          })\n        })\n      })\n      .then(function (repo) {\n        log(TAG, 'Copying files to repository')\n\n        return wrapPromise(function (resolve, reject) {\n          const destStream = vinylFs.dest(repo._repo.path)\n          .on('error', reject)\n          .on('end', function () {\n            resolve(repo)\n          })\n          .resume()\n\n          files.forEach(function (file) {\n            destStream.write(file)\n          })\n\n          destStream.end()\n        })\n      })\n      .then(function (repo) {\n        return repo.addFiles('.', { force: options.force || false })\n      })\n      .then(function (repo) {\n        const filesToBeCommitted = Object.keys(repo._staged).length\n\n        if (filesToBeCommitted === 0) {\n          log(TAG, 'No files have changed.')\n          cb()\n          return\n        }\n\n        log(TAG, 'Adding ' + filesToBeCommitted + ' files.')\n        log(TAG, 'Committing \"' + message + '\"')\n        repo.commit(message).then(function (newRepo) {\n          if (options.push === undefined || options.push) {\n            log(TAG, 'Pushing to remote.')\n            newRepo._repo.git('push', {\n              'set-upstream': true\n            }, [ origin, newRepo._currentBranch ], function (err) {\n              if (err) {\n                cb(err)\n                return\n              }\n\n              cb()\n            })\n\n            return\n          }\n\n          cb()\n        }, cb)\n      })\n      .catch(function (err) {\n        setImmediate(function () {\n          cb(err)\n        })\n      })\n    }\n  })\n\n  stream.on('error', console.error.bind(console))\n  /*\n      All Readable streams begin in paused mode but can be switched to flowing mode in one of the following ways:\n\n\t\t  * Adding a 'data' event handler.\n\t\t  * Calling the stream.resume() method.\n\t\t  * Calling the stream.pipe() method to send the data to a Writable.\n   */\n\n  stream.resume()\n\n  return stream\n}\n"
+  },
+  {
+    "__docId__": 7,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "Transform",
+    "memberof": "lib/gh-pages.js",
+    "longname": "lib/gh-pages.js~Transform",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/gh-pages.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 8,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "log",
+    "memberof": "lib/gh-pages.js",
+    "longname": "lib/gh-pages.js~log",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/gh-pages.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 9,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "vinylFs",
+    "memberof": "lib/gh-pages.js",
+    "longname": "lib/gh-pages.js~vinylFs",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/gh-pages.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 4,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 10,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "wrapPromise",
+    "memberof": "lib/gh-pages.js",
+    "longname": "lib/gh-pages.js~wrapPromise",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/gh-pages.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 11,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "git",
+    "memberof": "lib/gh-pages.js",
+    "longname": "lib/gh-pages.js~git",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/gh-pages.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 12,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "exports",
+    "memberof": "lib/gh-pages.js",
+    "longname": "lib/gh-pages.js~exports",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/gh-pages.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 21,
+    "undocument": true,
+    "params": [
+      {
+        "name": "options",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 13,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "lib/git.js",
+    "memberof": null,
+    "longname": "lib/git.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "// Based on https://github.com/shinnn/gulp-gh-pages/blob/master/index.js\nconst git = require('gift')\nconst rimraf = require('rimraf')\nconst wrapPromise = require('wrap-promise')\n\n/*\n * Git Constructor\n**/\nfunction Git(repo, initialBranch) {\n  this._repo = repo\n  this._staged = []\n  this._localBranches = []\n  this._remoteBranches = []\n  this._currentBranch = initialBranch\n  this._commits = []\n}\n\n/*\n * Caller abstract method\n * for promisifying traditional callback methods\n**/\nfunction caller() {\n  const returnedArgs = Array.prototype.slice.call(arguments)\n  const fn = returnedArgs.shift()\n  const self = this\n\n  return wrapPromise(function (resolve, reject) {\n    returnedArgs.push(function (err, args) {\n      if (err) {\n        reject(err)\n        return\n      }\n\n      resolve(args)\n    })\n\n    fn.apply(self, returnedArgs)\n  })\n}\n\n/*\n * Gets the URL for the specified remote of a repo\n */\nfunction getRemoteUrl(repo, remote) {\n  return wrapPromise(function (resolve, reject) {\n    repo.config(function (err, config) {\n      if (err) {\n        reject(new Error('Failed to find git repository in ' + config.path))\n        return\n      }\n\n      resolve(config.items['remote.' + remote + '.url'])\n    })\n  })\n}\n\n/*\n * Clone repo\n * Returns repo object\n**/\nfunction prepareRepo(remoteUrl, origin, dir) {\n  let promise\n\n  if (remoteUrl) {\n    // if a remoteUrl was provided, use it\n    promise = wrapPromise.Promise.resolve(remoteUrl)\n  } else {\n    // else try to extract it from the .git folder of\n    // the current directory.\n    promise = getRemoteUrl(git(process.cwd()), origin)\n  }\n\n  return promise.catch(function (e) { console.error(e) }).then(function (rUrl) {\n    remoteUrl = rUrl\n\n    return wrapPromise(function (resolve, reject) {\n      function initRepo(repo) {\n        repo.branch(function (err, head) {\n          if (err) {\n            reject(err)\n            return\n          }\n\n          resolve(new Git(repo, head.name).status())\n        })\n      }\n\n      function clearAndInitRepo() {\n        rimraf(dir, function (rmErr) {\n          if (rmErr) {\n            reject(rmErr)\n            return\n          }\n\n          git.clone(rUrl, dir, function (cloneErr, repo) {\n            if (cloneErr) {\n              reject(cloneErr)\n              return\n            }\n\n            initRepo(repo)\n          })\n        })\n      }\n\n      // assume that if there is a .git folder get its remoteUrl\n      // and check if it mathces the one we want to use.\n      getRemoteUrl(git(dir), origin).then(function (cwdRemoteUrl) {\n        if (remoteUrl === cwdRemoteUrl) {\n          initRepo(git(dir))\n          return\n        }\n\n        clearAndInitRepo()\n      }, function () {\n\n        clearAndInitRepo()\n      })\n    })\n  }).catch(function (err) {\n    console.error(err)\n  })\n}\n\n/*\n * List Local branches\n**/\nfunction listLocalBranches(repo) {\n  return caller.call(repo, repo.branches).then(function (branches) {\n    return branches.map(function (branch) {\n      return branch.name\n    })\n  })\n}\n\nfunction listRemoteBranches(repo) {\n  return caller.call(repo, repo.git, 'branch', { r: true }, [])\n  .then(function (branches) {\n    branches = branches.split('\\n')\n    branches.shift()\n    branches.pop()\n    return branches.map(function (branchName) {\n      branchName = branchName.trim()\n      return branchName\n    })\n  })\n}\n\n/*\n * List commits for specific branch\n**/\nfunction getCommits(repo, branchName) {\n  return caller.call(repo, repo.commits, branchName)\n  .then(function (commits) {\n    return commits.map(function (commitObj) {\n      return {\n        id: commitObj.id,\n        message: commitObj.message,\n        committed_date: commitObj.committed_date\n      }\n    })\n  })\n}\n\nGit.prepareRepo = prepareRepo\nGit.getRemoteUrl = getRemoteUrl\n\n/*\n * Status\n * files - Array of String paths; or a String path.\n**/\nGit.prototype.status = function () {\n  const self = this\n\n  return wrapPromise(function (resolve, reject) {\n    self._repo.status(function (err, repo) {\n      if (err) {\n        reject(err)\n        return\n      }\n\n      self._repo = repo.repo\n      self._staged = repo.files\n      wrapPromise.Promise.all([\n        getCommits(self._repo, self._currentBranch),\n        listRemoteBranches(self._repo),\n        listLocalBranches(self._repo)\n      ])\n      .then(function (args) {\n        self._remoteBranches = args[1]\n        self._localBranches = args[2]\n        self._commits = args[0]\n        resolve(self)\n      }, reject)\n    })\n  })\n}\n\n/*\n * Checkout a specific branch in a repo\n * @param name {String} -  String name of the branch.\n**/\nGit.prototype.checkoutBranch = function (name) {\n  const self = this\n\n  return wrapPromise(function (resolve, reject) {\n    self._repo.checkout(name, function (err) {\n      if (err) {\n        reject(err)\n        return\n      }\n\n      self._currentBranch = name\n      resolve(self.status())\n    })\n  })\n}\n\n/*\n * Create a branch\n * @param name {String} -  String name of the new branch.\n**/\nGit.prototype.createBranch = function (name) {\n  const self = this\n\n  return wrapPromise(function (resolve, reject) {\n    self._repo.create_branch(name, function (err) {\n      if (err) {\n        reject(err)\n      } else {\n        self._currentBranch = name\n        resolve(self.status())\n      }\n    })\n  })\n}\n\n/*\n * Create and checkout a branch\n * @param name {String} -  String name of the new branch.\n**/\nGit.prototype.createAndCheckoutBranch = function (name) {\n  return this.createBranch(name)\n  .then(function (repo) {\n    return repo.checkoutBranch(name)\n  })\n}\n\nGit.prototype.addFiles = function (files, options) {\n  const self = this\n\n  return wrapPromise(function (resolve, reject) {\n    self._repo.add(files, options, function (err) {\n      if (err) {\n        reject(err)\n        return\n      }\n\n      resolve(self.status())\n    })\n  })\n}\n\nGit.prototype.commit = function (commitMsg) {\n  const self = this\n\n  return wrapPromise(function (resolve, reject) {\n    self._repo.commit(commitMsg, { all: true }, function (err) {\n      if (err) {\n        reject(err)\n      } else {\n        resolve(self.status())\n      }\n    })\n  })\n}\n\nmodule.exports = Git\n"
+  },
+  {
+    "__docId__": 14,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "git",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~git",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "rimraf",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~rimraf",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "wrapPromise",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~wrapPromise",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 4,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "Git",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~Git",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 9,
+    "undocument": true,
+    "params": [
+      {
+        "name": "repo",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "initialBranch",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 18,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "caller",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~caller",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 22,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 19,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "getRemoteUrl",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~getRemoteUrl",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 44,
+    "undocument": true,
+    "params": [
+      {
+        "name": "repo",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "remote",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 20,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "prepareRepo",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~prepareRepo",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 61,
+    "undocument": true,
+    "params": [
+      {
+        "name": "remoteUrl",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "origin",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "dir",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 21,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "listLocalBranches",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~listLocalBranches",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 128,
+    "undocument": true,
+    "params": [
+      {
+        "name": "repo",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 22,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "listRemoteBranches",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~listRemoteBranches",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 136,
+    "undocument": true,
+    "params": [
+      {
+        "name": "repo",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 23,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "getCommits",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~getCommits",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 152,
+    "undocument": true,
+    "params": [
+      {
+        "name": "repo",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "branchName",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 24,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "status",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~status",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 172,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 25,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "checkoutBranch",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~checkoutBranch",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 203,
+    "undocument": true,
+    "params": [
+      {
+        "name": "name",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 26,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "createBranch",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~createBranch",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 223,
+    "undocument": true,
+    "params": [
+      {
+        "name": "name",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 27,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "createAndCheckoutBranch",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~createAndCheckoutBranch",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 242,
+    "undocument": true,
+    "params": [
+      {
+        "name": "name",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 28,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "addFiles",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~addFiles",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 249,
+    "undocument": true,
+    "params": [
+      {
+        "name": "files",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "options",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 29,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "commit",
+    "memberof": "lib/git.js",
+    "longname": "lib/git.js~commit",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/git.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 264,
+    "undocument": true,
+    "params": [
+      {
+        "name": "commitMsg",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    },
+    "generator": false
+  },
+  {
+    "__docId__": 30,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "lib/ls.js",
+    "memberof": null,
+    "longname": "lib/ls.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "function ls (onEnd) {\n  const FN      = require('fstream-npm')\n  const color   = require('chalk')\n  const glob    = require('glob')\n  const exclude = require('lodash.difference')\n\n  const included = [ ]\n\n  const all = glob.sync('**/**', { ignore : [ 'node_modules/**/**' ], nodir : true })\n\n  FN({ path: process.cwd() })\n    .on('child', function (e) {\n      included.push(e._path.replace(e.root.path + '/', ''))\n    })\n    .on('end', function () {\n      const excluded = exclude(all, included)\n\n      console.info(color.magenta('\\n\\nWILL BE PUBLISHED\\n'))\n      console.info(color.green(included.join('\\n')))\n      console.info(color.magenta('\\n\\nWON\\'T BE PUBLISHED\\n'))\n      console.info(color.red(excluded.join('\\n')))\n      console.info('\\n\\nYou can use .npmignore and the \"files\" field of package.json to manage these files.')\n      console.info('See https://docs.npmjs.com/misc/developers#keeping-files-out-of-your-package\\n')\n\n      if (typeof onEnd === 'function') {\n        onEnd({\n          included : included,\n          excluded : excluded\n        })\n      }\n    })\n}\n\nmodule.exports = ls\n\nif (!module.parent) {\n  ls()\n}\n"
+  },
+  {
+    "__docId__": 31,
+    "kind": "function",
+    "static": true,
+    "variation": null,
+    "name": "ls",
+    "memberof": "lib/ls.js",
+    "longname": "lib/ls.js~ls",
+    "access": null,
+    "export": false,
+    "importPath": "unleash/lib/ls.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "params": [
+      {
+        "name": "onEnd",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 33,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Infinity",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Infinity",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 34,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "NaN",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~NaN",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 35,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "undefined",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~undefined",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 36,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "null",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~null",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 37,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 38,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 39,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 40,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 41,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 42,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 43,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Symbol",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Symbol",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 44,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Error",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Error",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 45,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "EvalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~EvalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 46,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "InternalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~InternalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 47,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "RangeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RangeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 48,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "ReferenceError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ReferenceError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 49,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "SyntaxError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~SyntaxError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 50,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "TypeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~TypeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 51,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "URIError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~URIError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 52,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 53,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 54,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Date",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Date",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 55,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "String",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~String",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 56,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "string",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~string",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 57,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "RegExp",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RegExp",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 58,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 59,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 60,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 61,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint8ClampedArray",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8ClampedArray",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 62,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 63,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 64,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 65,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 66,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Float32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 67,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Float64Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float64Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 68,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Map",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Map",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 69,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Set",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Set",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 70,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "WeakMap",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakMap",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 71,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "WeakSet",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakSet",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 72,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "ArrayBuffer",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ArrayBuffer",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 73,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "DataView",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~DataView",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 74,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "JSON",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~JSON",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 75,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Promise",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Promise",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 76,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Generator",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Generator",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 77,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "GeneratorFunction",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~GeneratorFunction",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 78,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Reflect",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Reflect",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 79,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Proxy",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Proxy",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 81,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "CanvasRenderingContext2D",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~CanvasRenderingContext2D",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 82,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "DocumentFragment",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~DocumentFragment",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 83,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Element",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Element",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 84,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Event",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Event",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 85,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Node",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Node",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 86,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "NodeList",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~NodeList",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 87,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "XMLHttpRequest",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~XMLHttpRequest",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 88,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "AudioContext",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~AudioContext",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  }
+]
