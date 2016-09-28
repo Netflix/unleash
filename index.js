@@ -2,6 +2,9 @@
 
 'use strict' // force block-scoping
 
+/* Trick in-publish into thinking we're the NPM CLI running publish */
+process.env.npm_config_argv = JSON.stringify({ cooked : [ 'publish' ] })
+
 const
   Undertaker     = require('undertaker'),
   colors         = require('chalk'),
