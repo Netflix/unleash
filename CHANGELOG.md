@@ -1,3 +1,12 @@
+<a name="1.4.0"></a>
+## 1.4.0 (2016-09-27)
+
+
+#### Features
+
+* in-publish support ([67dffc72](https://github.com/netflix/unleash/commit/67dffc72))
+
+
 <a name="1.3.0"></a>
 ## 1.3.0 (2016-08-03)
 
