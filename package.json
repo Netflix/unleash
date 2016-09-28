@@ -6,6 +6,7 @@
     "node": ">=4.0.0"
   },
   "scripts": {
+    "doc": "esdoc -c ./esdoc.json",
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
     "prepublish": "npm run test",
@@ -66,7 +67,7 @@
   },
   "devDependencies": {
     "babel-eslint": "6.1.2",
-    "esdoc": "0.4.7",
+    "esdoc": "0.4.8",
     "esdoc-es7-plugin": "0.0.3",
     "eslint": "3.1.1",
     "eslint-config-netflix": "1.0.0-alpha.2",

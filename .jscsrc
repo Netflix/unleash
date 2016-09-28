@@ -9,7 +9,7 @@
   "disallowSpaceAfterPrefixUnaryOperators": true,
   "excludeFiles": [],
   "requireCapitalizedConstructors": true,
-  "requireCurlyBraces": ["if", "else", "for", "while", "do", "try", "catch"],
+  "requireCurlyBraces": ["for", "while", "do", "try", "catch"],
   "requireDotNotation": true,
   "requireMatchingFunctionName": true,
   "requirePaddingNewLinesAfterBlocks": true,
