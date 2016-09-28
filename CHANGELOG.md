@@ -1,3 +1,12 @@
+<a name="1.5.0"></a>
+## 1.5.0 (2016-09-27)
+
+
+#### Features
+
+* support tagging in monorepos ([e92c6818](https://github.com/netflix/unleash/commit/e92c6818))
+
+
 <a name="1.4.0"></a>
 ## 1.4.0 (2016-09-27)
 
