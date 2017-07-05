@@ -60,7 +60,7 @@
     "readable-stream": "2.1.4",
     "rimraf": "2.5.4",
     "semver": "5.0.3",
-    "undertaker": "0.12.1",
+    "undertaker": "1.1.0",
     "vinyl-fs": "2.4.3",
     "wrap-promise": "1.0.1",
     "yargs": "^3.29.0"
