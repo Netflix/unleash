@@ -1,3 +1,12 @@
+<a name="1.6.0"></a>
+## 1.6.0 (2017-07-05)
+
+
+#### Bug Fixes
+
+* **deps:** gulp-git fix issues with node 8 ([0d091cd2](https://github.com/netflix/unleash/commit/0d091cd2))
+
+
 <a name="1.5.0"></a>
 ## 1.5.0 (2016-09-27)
 
