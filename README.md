@@ -13,7 +13,7 @@
 * Allows you to preview what files will and won't be published to NPM
 
 ### Convince your manager (Why use Unleash?)
-* Unleash eats it's own dogfood. Unleash is used to release itself
+* Unleash eats its own dogfood. Unleash is used to release itself
 * Unleash eliminates common time-wasting mistakes such as forgetting to tag your releases (or forgetting to publish your module)
 * Unleash encourages use of software conventions such as the CHANGELOG by making it dead easy
 * Unleash encourages you to make git commit messages that make sense to everyone in your organization
