@@ -10,6 +10,7 @@ const
   colors         = require('chalk'),
   log            = require('fancy-log'),
   git            = require('gulp-git'),
+  merge          = require('lodash.merge'),
   values         = require('object-values'),
   vinylFS        = require('vinyl-fs'),
   ghPages        = require('./lib/gh-pages'),
@@ -53,11 +54,14 @@ const taskManager       = new Undertaker
 
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
-  log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
-
+  
   if (isDryRun === true) {
+    log(
+      '* Creating a changelog entry for ' + nextVersion + ' with links for ' + repoType + ' \n'
+    )
     return done()
   } else {
+    log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
     return writeChangelog({
       version  : nextVersion,
       repoType : repoType
@@ -97,8 +101,8 @@ taskManager.task(GH_PAGES_DEPLOY, function (options) {
     deployWithBump = Deploy.withBumpType.bind(Deploy, options),
     bumpTaskName   = bumperize(bumpType)
 
-  function noTrial () {
-    return deployWithBump({ dryRun : false })
+  function noTrial (opts) {
+    return deployWithBump(merge({ dryRun : false }, opts))
   }
 
   taskManager.task(bumpTaskName, taskManager.series([
@@ -108,8 +112,8 @@ taskManager.task(GH_PAGES_DEPLOY, function (options) {
   ]))
   taskManager.task(join(CHANGELOG_WRITE, bumpType), taskManager.series([ CHANGELOG_WRITE ]))
 
-  function dryRun () {
-    return deployWithBump({ dryRun: true })
+  function dryRun (opts) {
+    return deployWithBump(merge({ dryRun : true }, opts))
   }
 
   return taskManager.task(join(bumpTaskName, DRY_RUN), taskManager.series([
@@ -143,6 +147,18 @@ if (!module.parent) {
       describe: 'The remote repository type such as "stash"',
       default:  'github',
       type:     'string'
+    })
+    .option('no-publish', {
+      alias:    'npb',
+      describe: 'Sets whether or not the package is published to NPM',
+      default:  false,
+      type:     'boolean'
+    })
+    .option('no-push', {
+      alias:    'nps',
+      describe: 'Sets whether or not the package is pushed to a git remote',
+      default:  false,
+      type:     'boolean'
     })
     .option('ghpages-deploy', {
       alias:    'gh',
@@ -189,11 +205,11 @@ if (!module.parent) {
     if (unleash.dryRun) {
       isDryRun = true
       taskName = join(taskName, DRY_RUN)
-      log('Utilizing dry run mode')
+      log('Utilizing dry run mode. This is a dry run of the following actions: \n')
     }
 
     const task = taskManager.task(taskName)
-    task()
+    task(unleash)
   } else if (unleash.ls) {
     const task = taskManager.task('ls')
     task()
