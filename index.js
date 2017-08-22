@@ -55,7 +55,6 @@ const taskManager       = new Undertaker
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
   
-
   if (isDryRun === true) {
     log(
       '* Creating a changelog entry for ' + nextVersion + ' with links for ' + repoType + ' \n'
