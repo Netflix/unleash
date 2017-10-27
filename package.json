@@ -9,7 +9,7 @@
     "doc": "esdoc -c ./esdoc.json",
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
-    "prepublishOnly": "echo \"prepublishOnly\" && npm run test",
+    "prepublishOnly": "npm run test",
     "test": "npm run lint && node --harmony ./node_modules/.bin/tape tests/specs/*.js | tap-difflet",
     "test:single": "tape tests/single-runner.js | tap-difflet",
     "clean": "git clean -d -f -x"
