@@ -1,3 +1,14 @@
+<a name="2.0.0-beta.3"></a>
+### 2.0.0-beta.3 (2017-10-26)
+
+
+#### Bug Fixes
+
+* tag not pushing ([69570493](https://github.com/netflix/unleash/commit/69570493))
+* revert failed publish ([84b1f441](https://github.com/netflix/unleash/commit/84b1f441))
+* revert on failed publish ([e1d8169e](https://github.com/netflix/unleash/commit/e1d8169e))
+
+
 <a name="2.0.0-beta.2"></a>
 ### 2.0.0-beta.2 (2017-10-26)
 
