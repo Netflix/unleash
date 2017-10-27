@@ -260,10 +260,8 @@ if (!module.parent) {
     versionType = unleash.type
     repoType = unleash.repoType
 
-    if (unleash.dryRun)
+    if (unleash.dryRun) 
       taskName = join(taskName, DRY_RUN)
-      log('Utilizing dry run mode. This is a dry run of the following actions: \n')
-    }
 
     const task = taskManager.task(taskName)
     task(unleash)
