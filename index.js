@@ -57,6 +57,12 @@ const taskManager       = new Undertaker
 const REF_SHA_CMD    = 'git rev-parse --verify HEAD'
 const CURRENT_SHA    = ChildProcess.execSync(REF_SHA_CMD)
                         .toString().replace('\n','')
+const PKG_STS_CMD    = 'git status package.json -s'
+const PKG_STATUS     = ChildProcess.execSync(PKG_STS_CMD)
+                        .toString().replace('\n','').trim()   
+const CL_STS_CMD     = 'git status CHANGELOG.md -s'
+const CL_STATUS      = ChildProcess.execSync(CL_STS_CMD)
+                        .toString().replace('\n','').trim()                                          
 
 const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   return y.option(shortFlag, {
@@ -109,6 +115,8 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   .argv
 
 unleash.CURRENT_SHA = CURRENT_SHA
+unleash.PKG_STATUS = PKG_STATUS
+unleash.CL_STATUS = CL_STATUS
 
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
