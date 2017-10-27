@@ -22,7 +22,8 @@ const
 let
   isDryRun = false,
   versionType,
-  repoType
+  repoType,
+  ghp
 
 const
   CHANGELOG_COMMIT   = 'changelog:commit',
@@ -57,7 +58,7 @@ taskManager.task(CHANGELOG_WRITE, function (done) {
   
   if (isDryRun === true) {
     log(
-      '* Creating a changelog entry for ' + nextVersion + ' with links for ' + repoType + ' \n'
+      '* Creating a changelog entry for version ' + nextVersion + ' with links to the commits on ' + repoType
     )
     return done()
   } else {
@@ -73,27 +74,40 @@ taskManager.task('ls', function () {
   return ls()
 })
 
-taskManager.task(CHANGELOG_COMMIT, function () {
+taskManager.task(CHANGELOG_COMMIT, function (done) {
+  const docsCommit = 'docs(CHANGELOG): Update changelog'
+
   if (isDryRun) {
-    return true
+    log('* Adding commit "' + docsCommit + '"')
+    return done()
   } else {
     // TODO - allow configuration of this src?
     return vinylFS.src([ '*.md' ])
              .pipe(git.add())
-             .pipe(git.commit('docs(CHANGELOG): Update changelog'))
+             .pipe(git.commit(docsCommit))
   }
 })
 
-taskManager.task(GH_PAGES_DEPLOY, function (options) {
-  log('Deploying to gh-pages from ' + options.path)
-
+taskManager.task(GH_PAGES_DEPLOY, function (done) {
   if (isDryRun) {
-    return true
+    log('* Pushing a gh-pages branch from the contents of "' + ghp + '"')
+    return done ? done() : true
   } else {
-    return vinylFS.src([ options.path ])
+    log('Deploying to gh-pages from ' + ghp)
+    return vinylFS.src([ ghp ])
              .pipe(ghPages())
   }
 })
+
+function dryRunStartGh (done) {
+  log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+  return done()
+}
+
+taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
+  dryRunStartGh,
+  GH_PAGES_DEPLOY
+]))
 
 // bump:major, bump:minor, bump:patch
 ; versionTypes.forEach(function (bumpType) {
@@ -116,7 +130,16 @@ taskManager.task(GH_PAGES_DEPLOY, function (options) {
     return deployWithBump(merge({ dryRun : true }, opts))
   }
 
+  function dryRunStart (done) {
+    const nextVersion = Deploy.getNextVersion(versionType)
+    log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+    log('* Incrementing to the next "' + bumpType + '" semantic version, "' + nextVersion + '"')
+
+    return done()
+  }
+
   return taskManager.task(join(bumpTaskName, DRY_RUN), taskManager.series([
+    dryRunStart,
     CHANGELOG_WRITE,
     CHANGELOG_COMMIT,
     dryRun
@@ -148,16 +171,16 @@ if (!module.parent) {
       default:  'github',
       type:     'string'
     })
-    .option('no-publish', {
-      alias:    'npb',
+    .option('publish', {
+      alias:    'pb',
       describe: 'Sets whether or not the package is published to NPM',
-      default:  false,
+      default:  true,
       type:     'boolean'
     })
-    .option('no-push', {
-      alias:    'nps',
+    .option('push', {
+      alias:    'ps',
       describe: 'Sets whether or not the package is pushed to a git remote',
-      default:  false,
+      default:  true,
       type:     'boolean'
     })
     .option('ghpages-deploy', {
@@ -188,25 +211,42 @@ if (!module.parent) {
     }
   })
 
+  if (unleash.dryRun) {
+    isDryRun = true
+  }
+
+  const command = process.argv.slice(1).map(function (a) {
+    return a.split('/').reverse()[0]
+  }).join(' ')
+  const wut = 'What did you want me to dry run?'
+  const noType = 'Need a semantic version type homie...' 
+  const fakeBumpType = 'semantic-version-type-should-be-here'
+
+  function logFlagCommand () {
+    return log.error('Run "unleash --help" to discover available flags')
+  }
+
+  function logCorrectedCommand (flag) {
+    return log.error(command + ' --' + colors.bgGreen(colors.white(flag)))
+  }
+
   if (unleash.type) {
-    if (unleash.ls) {
+    if (unleash.ls)
       ls()
-    }
 
     if (unleash.gh) {
+      ghp = unleash.ghp 
       const task = taskManager.task(GH_PAGES_DEPLOY)
-      task({ path : unleash.ghp })
+      task()
     }
 
     let taskName = bumperize(unleash.type)
+
     versionType = unleash.type
     repoType = unleash.repoType
 
-    if (unleash.dryRun) {
-      isDryRun = true
+    if (unleash.dryRun)
       taskName = join(taskName, DRY_RUN)
-      log('Utilizing dry run mode. This is a dry run of the following actions: \n')
-    }
 
     const task = taskManager.task(taskName)
     task(unleash)
@@ -214,10 +254,28 @@ if (!module.parent) {
     const task = taskManager.task('ls')
     task()
   } else if (unleash.gh) {
-    const task = taskManager.task(GH_PAGES_DEPLOY)
-    task({ path : unleash.ghp })
+    ghp = unleash.ghp 
+    const task = taskManager.task(isDryRun ? join(GH_PAGES_DEPLOY, DRY_RUN) : GH_PAGES_DEPLOY)
+    task()
+  } else if (!unleash.publish) {
+    const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noType))
+
+    log.error(errorMessage)
+    logCorrectedCommand(fakeBumpType)
+    logFlagCommand()
+  } else if (!unleash.push) {
+    const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noType))
+
+    log.error(errorMessage)
+    logCorrectedCommand(fakeBumpType)
+    logFlagCommand()
   } else {
-    throw new Error('Need a task homie')
+    const noTask = 'Need a task homie...' 
+    const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noTask))
+
+    log.error(errorMessage)
+    logCorrectedCommand('flag-name-should-be-here')
+    logFlagCommand()
   }
 }
 
