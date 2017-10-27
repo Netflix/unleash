@@ -53,6 +53,10 @@ const longVersionFlags  = values(VersionFlagMap)
 const versionTypes      = longVersionFlags
 const taskManager       = new Undertaker
 
+const REF_SHA_CMD    = 'git rev-parse --verify HEAD',
+const CURRENT_SHA    = ChildProcess.execSync(REF_SHA_CMD)
+                   .toString().replace('\n',''),
+
 const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   return y.option(shortFlag, {
     alias:    VersionFlagMap[shortFlag],
@@ -102,6 +106,8 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   .alias('list-publishables', 'ls')
   .help('h').alias('h', 'help')
   .argv
+
+unleash.CURRENT_SHA = CURRENT_SHA
 
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
