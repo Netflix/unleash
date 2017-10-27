@@ -252,7 +252,7 @@ if (!module.parent) {
     versionType = unleash.type
     repoType = unleash.repoType
 
-    if (unleash.dryRun)
+    if (unleash.dryRun) 
       taskName = join(taskName, DRY_RUN)
 
     const task = taskManager.task(taskName)
