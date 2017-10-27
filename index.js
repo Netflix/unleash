@@ -6,6 +6,7 @@
 process.env.npm_config_argv = JSON.stringify({ cooked : [ 'publish' ] })
 
 const
+  ChildProcess   = require('child_process'),
   Undertaker     = require('undertaker'),
   colors         = require('chalk'),
   log            = require('fancy-log'),
@@ -53,9 +54,9 @@ const longVersionFlags  = values(VersionFlagMap)
 const versionTypes      = longVersionFlags
 const taskManager       = new Undertaker
 
-const REF_SHA_CMD    = 'git rev-parse --verify HEAD',
+const REF_SHA_CMD    = 'git rev-parse --verify HEAD'
 const CURRENT_SHA    = ChildProcess.execSync(REF_SHA_CMD)
-                   .toString().replace('\n',''),
+                        .toString().replace('\n','')
 
 const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   return y.option(shortFlag, {
