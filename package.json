@@ -63,7 +63,7 @@
     "undertaker": "1.1.0",
     "vinyl-fs": "2.4.3",
     "wrap-promise": "1.0.1",
-    "yargs": "^3.29.0"
+    "yargs": "10.0.3"
   },
   "devDependencies": {
     "babel-eslint": "6.1.2",

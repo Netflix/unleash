@@ -53,6 +53,56 @@ const longVersionFlags  = values(VersionFlagMap)
 const versionTypes      = longVersionFlags
 const taskManager       = new Undertaker
 
+const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
+  return y.option(shortFlag, {
+    alias:    VersionFlagMap[shortFlag],
+    describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
+    type:     'boolean'
+  })
+}, require('yargs'))
+  .option('type', {
+    describe: 'The SemVer version type such as "patch"',
+    type:     'string'
+  })
+  .option('ls', {
+    alias:    'l',
+    describe: 'Prints the files and directories that will and won\'t be published',
+    type:     'boolean'
+  })
+  .option('repo-type', {
+    alias:    'r',
+    describe: 'The remote repository type such as "stash"',
+    default:  'github',
+    type:     'string'
+  })
+  .option('publish', {
+    alias:    'pb',
+    describe: 'Sets whether or not the package is published to NPM',
+    default:  true,
+    type:     'boolean'
+  })
+  .option('push', {
+    alias:    'ps',
+    describe: 'Sets whether or not the package is pushed to a git remote',
+    default:  true,
+    type:     'boolean'
+  })
+  .option('ghpages-deploy', {
+    alias:    'gh',
+    describe: 'Deploy gh-pages',
+    type:     'boolean'
+  })
+  .option('ghpages-path', {
+    alias:    'ghp',
+    describe: 'The glob path to deploy to gh-pages',
+    default:  './docs/**/*',
+    type:     'string'
+  })
+  .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
+  .alias('list-publishables', 'ls')
+  .help('h').alias('h', 'help')
+  .argv
+
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
   
@@ -115,8 +165,8 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
     deployWithBump = Deploy.withBumpType.bind(Deploy, options),
     bumpTaskName   = bumperize(bumpType)
 
-  function noTrial (opts) {
-    return deployWithBump(merge({ dryRun : false }, opts))
+  function noTrial () {
+    return deployWithBump(merge({ dryRun : false }, unleash))
   }
 
   taskManager.task(bumpTaskName, taskManager.series([
@@ -126,8 +176,8 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
   ]))
   taskManager.task(join(CHANGELOG_WRITE, bumpType), taskManager.series([ CHANGELOG_WRITE ]))
 
-  function dryRun (opts) {
-    return deployWithBump(merge({ dryRun : true }, opts))
+  function dryRun () {
+    return deployWithBump(merge({ dryRun : true }, unleash))
   }
 
   function dryRunStart (done) {
@@ -148,56 +198,6 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 
 if (!module.parent) {
   log(colors.yellow('=== UNLEASH ==='))
-
-  const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
-    return y.option(shortFlag, {
-      alias:    VersionFlagMap[shortFlag],
-      describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
-      type:     'boolean'
-    })
-  }, require('yargs'))
-    .option('type', {
-      describe: 'The SemVer version type such as "patch"',
-      type:     'string'
-    })
-    .option('ls', {
-      alias:    'l',
-      describe: 'Prints the files and directories that will and won\'t be published',
-      type:     'boolean'
-    })
-    .option('repo-type', {
-      alias:    'r',
-      describe: 'The remote repository type such as "stash"',
-      default:  'github',
-      type:     'string'
-    })
-    .option('publish', {
-      alias:    'pb',
-      describe: 'Sets whether or not the package is published to NPM',
-      default:  true,
-      type:     'boolean'
-    })
-    .option('push', {
-      alias:    'ps',
-      describe: 'Sets whether or not the package is pushed to a git remote',
-      default:  true,
-      type:     'boolean'
-    })
-    .option('ghpages-deploy', {
-      alias:    'gh',
-      describe: 'Deploy gh-pages',
-      type:     'boolean'
-    })
-    .option('ghpages-path', {
-      alias:    'ghp',
-      describe: 'The glob path to deploy to gh-pages',
-      default:  './docs/**/*',
-      type:     'string'
-    })
-    .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
-    .alias('list-publishables', 'ls')
-    .help('h').alias('h', 'help')
-    .argv
 
   // Kray Kray McFadden ish to fake mutually exclusive arguments
   // See https://github.com/bcoe/yargs/issues/275
@@ -249,7 +249,7 @@ if (!module.parent) {
       taskName = join(taskName, DRY_RUN)
 
     const task = taskManager.task(taskName)
-    task(unleash)
+    task()
   } else if (unleash.ls) {
     const task = taskManager.task('ls')
     task()
