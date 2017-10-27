@@ -1,3 +1,19 @@
+<a name="2.0.0-beta.1"></a>
+### 2.0.0-beta.1 (2017-10-26)
+
+
+#### Bug Fixes
+
+* pass cli args ([0a44262f](https://github.com/netflix/unleash/commit/0a44262f))
+* **dry:** sep push & pub ([fca5fc64](https://github.com/netflix/unleash/commit/fca5fc64))
+* **dryrun:** don't commit or tag ([1c47b7ef](https://github.com/netflix/unleash/commit/1c47b7ef))
+
+
+#### Features
+
+* revert ([a6232987](https://github.com/netflix/unleash/commit/a6232987))
+
+
 <a name="1.6.1"></a>
 ### 1.6.1 (2017-07-05)
 
