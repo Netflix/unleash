@@ -1,3 +1,26 @@
+<a name="2.0.0-beta.2"></a>
+### 2.0.0-beta.2 (2017-10-26)
+
+
+#### Bug Fixes
+
+* bad merge ([d5db9698](https://github.com/netflix/unleash/commit/d5db9698))
+* pass cli args ([0a44262f](https://github.com/netflix/unleash/commit/0a44262f))
+* **dry:** sep push & pub ([fca5fc64](https://github.com/netflix/unleash/commit/fca5fc64))
+* **dryrun:**
+  * don't commit or tag ([1c47b7ef](https://github.com/netflix/unleash/commit/1c47b7ef))
+  * don't commit or tag ([f4a6b62b](https://github.com/netflix/unleash/commit/f4a6b62b))
+
+
+#### Features
+
+* revert ([51b1e857](https://github.com/netflix/unleash/commit/51b1e857))
+* revert ([c0190f98](https://github.com/netflix/unleash/commit/c0190f98))
+* revert ([3252915a](https://github.com/netflix/unleash/commit/3252915a))
+* revert ([9021340d](https://github.com/netflix/unleash/commit/9021340d))
+* revert ([a6232987](https://github.com/netflix/unleash/commit/a6232987))
+
+
 <a name="2.0.0-beta.1"></a>
 ### 2.0.0-beta.1 (2017-10-26)
 
