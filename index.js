@@ -108,8 +108,26 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
 
 unleash.CURRENT_SHA = CURRENT_SHA
 
+isDryRun = !!unleash.dryRun
+
 const versionType = unleash.type
 const repoType = unleash.repoType
+
+if (unleash.gh) {
+  ghp = unleash.ghp 
+}
+
+// Kray Kray McFadden ish to fake mutually exclusive arguments
+// See https://github.com/bcoe/yargs/issues/275
+shortVersionFlags.forEach(function (key) {
+  if (unleash[key]) {
+    if (unleash.type) {
+      throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
+    }
+
+    unleash.type = VersionFlagMap[key]
+  }
+})
 
 const taskManagerInternalsSentinel = Symbol('__internals__')
 
@@ -208,24 +226,6 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
     CHANGELOG_COMMIT,
     dryRun
   ]))
-})
-
-isDryRun = !!unleash.dryRun
-
-if (unleash.gh) {
-  ghp = unleash.ghp 
-}
-
-// Kray Kray McFadden ish to fake mutually exclusive arguments
-// See https://github.com/bcoe/yargs/issues/275
-shortVersionFlags.forEach(function (key) {
-  if (unleash[key]) {
-    if (unleash.type) {
-      throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
-    }
-
-    unleash.type = VersionFlagMap[key]
-  }
 })
 
 // Don't automatically run tasks based on argv unless we're run via a CLI
