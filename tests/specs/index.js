@@ -1,5 +1,6 @@
 'use strict' // force block-scoping w/ Node < 6
 
+const includes           = require('../node-4-shims').includes
 const spec               = require('tape')
 const unleashTaskManager = require('../../')
 
@@ -13,7 +14,10 @@ spec('The Unleash task manager', specOptions => {
   const test = specOptions.test
   const endSpec = specOptions.end
 
-  test('Has a task function (well it inherits from Undertaker)', ({ equal, end : endTest }) => {
+  test('Has a task function (well it inherits from Undertaker)', testOptions => {
+    const equal = testOptions.equal
+    const endTest = testOptions.end
+
     equal(typeof unleashTaskManager.task, 'function')
     endTest()
   })
@@ -30,7 +34,7 @@ spec('The Unleash task manager', specOptions => {
     const equal = testOptions.equal
     const endTest = testOptions.end
 
-    const dryRunTaskNames = taskNames.filter(n => n.includes('dry-run'))
+    const dryRunTaskNames = taskNames.filter(n => includes.call(n, 'dry-run'))
     equal(dryRunTaskNames.length, 5)
     endTest()
   })
@@ -40,9 +44,9 @@ spec('The Unleash task manager', specOptions => {
     const endTest = testOptions.end
 
     const changelogWritePrefix = 'changelog:write:'
-    const changelogWriteTaskNames = taskNames.filter(n => n.includes(changelogWritePrefix))
+    const changelogWriteTaskNames = taskNames.filter(n => includes.call(n, changelogWritePrefix))
     equal(changelogWriteTaskNames.length, SemVerIncrementTypes.length)
-    SemVerIncrementTypes.forEach(t => equal(changelogWriteTaskNames.includes(`${changelogWritePrefix}${t}`), true))
+    SemVerIncrementTypes.forEach(t => equal(includes.call(changelogWriteTaskNames, `${changelogWritePrefix}${t}`), true))
     endTest()
   })
 
