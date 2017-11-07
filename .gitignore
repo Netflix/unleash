@@ -1,3 +1,5 @@
 .publish
 npm-debug.log
 package-lock.json
+tests/coverage/
+docs
