@@ -4,34 +4,13 @@
 
 #### Bug Fixes
 
+* git tag pushing is working again
+* prepublish scripts are working with the latest npm
 * merge on index ([db5224b3](https://github.com/netflix/unleash/commit/db5224b3))
 * block scoping < 6 ([93d89f47](https://github.com/netflix/unleash/commit/93d89f47))
 * move up version type ([99b840ab](https://github.com/netflix/unleash/commit/99b840ab))
 * tag not pushing ([b322f8f4](https://github.com/netflix/unleash/commit/b322f8f4))
 * revert on failed publish ([27a54ffc](https://github.com/netflix/unleash/commit/27a54ffc))
-* bad merge ([e4dbd6c0](https://github.com/netflix/unleash/commit/e4dbd6c0))
-* pass cli args ([9ccbf8d8](https://github.com/netflix/unleash/commit/9ccbf8d8))
-* **dryrun:**
-  * don't commit or tag ([25350b2a](https://github.com/netflix/unleash/commit/25350b2a))
-  * don't commit or tag ([5dc1217b](https://github.com/netflix/unleash/commit/5dc1217b))
-
-
-#### Features
-
-* di for logging ([38fb29dd](https://github.com/netflix/unleash/commit/38fb29dd))
-* revert ([ce6afbe5](https://github.com/netflix/unleash/commit/ce6afbe5))
-* revert ([c9dde607](https://github.com/netflix/unleash/commit/c9dde607))
-
-
-#### Breaking Changes
-
-* stash repo type is now bitbucket
-
- ([ce0ca760](https://github.com/netflix/unleash/commit/ce0ca760))
-
-
-<a name="2.0.0-beta.8"></a>
-### 2.0.0-beta.8 (2017-11-07)
 
 
 #### Features
@@ -40,17 +19,14 @@
 * `--no-push` can be used to skip git pushing
 * `--repo-type stash` has been renamed to bitbucket
 * mid-deployment failures are now recovered from/reverted, your own changes are retained
+* di for logging ([38fb29dd](https://github.com/netflix/unleash/commit/38fb29dd))
 
 
-#### Bug Fixes
+#### Breaking Changes
 
-* git tag pushing is working again
-* prepublish scripts are working with the latest npm
+* stash repo type is now bitbucket
 
-
-#### Features
-
-* revert ([a6232987](https://github.com/netflix/unleash/commit/a6232987))
+ ([ce0ca760](https://github.com/netflix/unleash/commit/ce0ca760))
 
 
 <a name="1.6.1"></a>
