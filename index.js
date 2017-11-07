@@ -108,6 +108,9 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
 
 unleash.CURRENT_SHA = CURRENT_SHA
 
+const versionType = unleash.type
+const repoType = unleash.repoType
+
 const taskManagerInternalsSentinel = Symbol('__internals__')
 
 const taskInternals = taskManager[taskManagerInternalsSentinel] = {
@@ -208,8 +211,6 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 })
 
 isDryRun = !!unleash.dryRun
-const versionType = unleash.type
-const repoType = unleash.repoType
 
 if (unleash.gh) {
   ghp = unleash.ghp 
