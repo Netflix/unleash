@@ -38,8 +38,14 @@ const createDoneCallbackWrapper = () => {
   }
 }
 
-spec('The dry run task set', ({ test, end : endSpec }) => {
-  test('Has a changelog commit task that logs', ({ equal, end : endTest }) => {
+spec('The dry run task set', specOptions => {
+  const test = specOptions.test
+  const endSpec = specOptions.end
+
+  test('Has a changelog commit task that logs', testOptions => {
+    const equal = testOptions.equal
+    const endTest = testOptions.end
+
     const changelogCommitTaskName = 'changelog:commit'
     const changelogCommitTask = tasks[changelogCommitTaskName]
     equal(typeof changelogCommitTask, 'function', 'Has a changelog commit dry run task')
@@ -54,7 +60,10 @@ spec('The dry run task set', ({ test, end : endSpec }) => {
     endTest()
   })
 
-  test('Has a changelog write task that logs', ({ equal, end : endTest }) => {
+  test('Has a changelog write task that logs', testOptions => {
+    const equal = testOptions.equal
+    const endTest = testOptions.end
+
     const changelogWriteTaskName = 'changelog:write'
     const changelogWriteTask = tasks[changelogWriteTaskName]
     equal(typeof changelogWriteTask, 'function', 'Has a changelog write dry run task')
@@ -70,7 +79,10 @@ spec('The dry run task set', ({ test, end : endSpec }) => {
     endTest()
   })
 
-  test('Has a ghpages task that logs', ({ equal, end : endTest }) => {
+  test('Has a ghpages task that logs', testOptions => {
+    const equal = testOptions.equal
+    const endTest = testOptions.end
+
     const ghpagesTaskName = 'ghpages:deploy'
     const ghpagesTask = tasks[ghpagesTaskName]
     equal(typeof ghpagesTask, 'function', 'Has a ghpages dry run task')
@@ -85,7 +97,10 @@ spec('The dry run task set', ({ test, end : endSpec }) => {
     endTest()
   })
 
-  test('Has a ghpages task that returns true sans done callback', ({ equal, end : endTest }) => {
+  test('Has a ghpages task that returns true sans done callback', testOptions => {
+    const equal = testOptions.equal
+    const endTest = testOptions.end
+
     const ghpagesTaskName = 'ghpages:deploy'
     const ghpagesTask = tasks[ghpagesTaskName]
     const resetTaskLogger = taskLogSwapper()
@@ -96,7 +111,10 @@ spec('The dry run task set', ({ test, end : endSpec }) => {
     endTest()
   })
 
-  test('Has a major bump task that logs', ({ equal, end : endTest }) => {
+  test('Has a major bump task that logs', testOptions => {
+    const equal = testOptions.equal
+    const endTest = testOptions.end
+
     const bumpMajorTaskName = 'bump:major:dry-run'
     const bumpMajorTask = tasks[bumpMajorTaskName]
     
