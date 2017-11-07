@@ -5,12 +5,14 @@
 
 ### Key Features
 * Updates your version according to semantic versioning
-* Runs your tests
-* Updates your changelog
-* Publishes your module to NPM
-* Pushes your code and tags to git
+* Runs your tests or any other prepublish scripts you've defined in package.json
+* Updates your changelog according to the conventional changelog spec
+* Publishes your module to NPM (optionally turned off via `--no-publish`)
+* Pushes your code and tags to git (optionally turned off via `--no-push`)
 * Supports both Github & Stash (creates links to these in your changelog)
-* Allows you to preview what files will and won't be published to NPM
+* Automatically recovers from errors by safely resetting to the git state prior to running unleash
+* Features a "dry run" mode for most commands that will allow you to preview what change unleash will make before it makes them
+* Allows you to preview what files will and won't be published to NPM (`--list-publishables`)
 
 ### Convince your manager (Why use Unleash?)
 * Unleash eats its own dogfood. Unleash is used to release itself
