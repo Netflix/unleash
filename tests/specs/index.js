@@ -1,6 +1,8 @@
 const spec               = require('tape')
 const unleashTaskManager = require('../../')
 
+console.dir(unleashTaskManager)
+
 const SemVerIncrementTypes = [
   'major', 'minor', 'patch', 'prerelease'
 ]

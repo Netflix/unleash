@@ -22,8 +22,6 @@ const
 // Module-level CLI globals
 let
   isDryRun = false,
-  versionType,
-  repoType,
   ghp
 
 const
@@ -209,24 +207,29 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
   ]))
 })
 
+isDryRun = !!unleash.dryRun
+const versionType = unleash.type
+const repoType = unleash.repoType
+
+if (unleash.gh) {
+  ghp = unleash.ghp 
+}
+
+// Kray Kray McFadden ish to fake mutually exclusive arguments
+// See https://github.com/bcoe/yargs/issues/275
+shortVersionFlags.forEach(function (key) {
+  if (unleash[key]) {
+    if (unleash.type) {
+      throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
+    }
+
+    unleash.type = VersionFlagMap[key]
+  }
+})
+
+// Don't automatically run tasks based on argv unless we're run via a CLI
 if (!module.parent) {
   taskInternals.log(colors.yellow('=== UNLEASH ==='))
-
-  // Kray Kray McFadden ish to fake mutually exclusive arguments
-  // See https://github.com/bcoe/yargs/issues/275
-  shortVersionFlags.forEach(function (key) {
-    if (unleash[key]) {
-      if (unleash.type) {
-        throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
-      }
-
-      unleash.type = VersionFlagMap[key]
-    }
-  })
-
-  if (unleash.dryRun) {
-    isDryRun = true
-  }
 
   const command = process.argv.slice(1).map(function (a) {
     return a.split('/').reverse()[0]
@@ -248,17 +251,13 @@ if (!module.parent) {
       ls()
 
     if (unleash.gh) {
-      ghp = unleash.ghp 
       const task = taskManager.task(GH_PAGES_DEPLOY)
       task()
     }
 
     let taskName = bumperize(unleash.type)
 
-    versionType = unleash.type
-    repoType = unleash.repoType
-
-    if (unleash.dryRun) 
+    if (isDryRun) 
       taskName = join(taskName, DRY_RUN)
 
     const task = taskManager.task(taskName)
