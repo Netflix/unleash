@@ -5,20 +5,24 @@
 
 ### Key Features
 * Updates your version according to semantic versioning
-* Runs your tests
-* Updates your changelog
-* Publishes your module to NPM
-* Pushes your code and tags to git
-* Supports both Github & Bitbucket Server (creates links to these in your changelog)
-* Allows you to preview what files will and won't be published to NPM
+* Runs your tests or any other prepublish scripts you've defined in package.json
+* Updates your changelog according to the conventional changelog spec
+* Publishes your module to NPM (optionally turned off via `--no-publish`)
+* Pushes your code and tags to git (optionally turned off via `--no-push`)
+* Supports both Github & Stash (creates links to these in your changelog)
+* Automatically recovers from errors by safely resetting to the git state prior to running unleash
+* Features a "dry run" mode for most commands that will allow you to preview what change unleash will make before it makes them
+* Allows you to preview what files will and won't be published to NPM (`--list-publishables`)
+* Works w/ Node versions all the way back to 4.8.5
 
 ### Convince your manager (Why use Unleash?)
 * Unleash eats its own dogfood. Unleash is used to release itself
-* Unleash eliminates common time-wasting mistakes such as forgetting to tag your releases (or forgetting to publish your module)
-* Unleash encourages use of software conventions such as the CHANGELOG by making it dead easy
+* Unleash eliminates common time-wasting / colleague-confusing mistakes such as forgetting to tag your releases, update your changelog or forgetting to publish your module)
+* Unleash encourages use of software comprehension conventions such as the CHANGELOG by making it dead easy
 * Unleash encourages you to make git commit messages that make sense to everyone in your organization
-* Unleash is constructed from battle-tested and well-understood open source modules such as vinyl-fs, yargs, chalk & semver. Additionally, the architecture of Unleash is partially based on Gulp
+* Unleash is constructed from battle-tested and well-understood open source modules such as npm, vinyl-fs, yargs, chalk & semver. Additionally, the architecture of Unleash is partially based on Gulp 
 * Unleash uses the [Angular Conventional Changelog](https://github.com/ajoslin/conventional-changelog/blob/9c359faacea93b566f19c4c7214a6bca58edf99f/conventions/angular.md) manner of using git commit conventions
+* Unleash takes inter-organizational compatibility seriously—most any version of Node being used by a team will work with Unleash
 
 
 ### CLI Examples
@@ -51,6 +55,16 @@ unleash -M
 OR...
 ```
 unleash --major
+```
+
+#### Execute a Major Package Version Increment w/o Publishing to NPM
+```
+unleash -M --no-publish
+```
+
+#### Execute a Major NPM Release w/o Pushing to git
+```
+unleash -M --no-push
 ```
 
 #### Execute a Minor Release to a Stash Repository
