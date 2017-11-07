@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 
-'use strict' // force block-scoping
+'use strict' // force block-scoping w/ Node < 6
 
 /* Trick in-publish into thinking we're the NPM CLI running publish */
 process.env.npm_config_argv = JSON.stringify({ cooked : [ 'publish' ] })
 
 const
+  ChildProcess   = require('child_process'),
   Undertaker     = require('undertaker'),
   colors         = require('chalk'),
-  log            = require('fancy-log'),
+  fancyLog       = require('fancy-log'),
   git            = require('gulp-git'),
+  merge          = require('lodash.merge'),
   values         = require('object-values'),
   vinylFS        = require('vinyl-fs'),
   ghPages        = require('./lib/gh-pages'),
@@ -20,8 +22,7 @@ const
 // Module-level CLI globals
 let
   isDryRun = false,
-  versionType,
-  repoType
+  ghp
 
 const
   CHANGELOG_COMMIT   = 'changelog:commit',
@@ -51,13 +52,108 @@ const longVersionFlags  = values(VersionFlagMap)
 const versionTypes      = longVersionFlags
 const taskManager       = new Undertaker
 
+const REF_SHA_CMD    = 'git rev-parse --verify HEAD'
+const CURRENT_SHA    = ChildProcess.execSync(REF_SHA_CMD)
+                        .toString().replace('\n','')
+const PKG_STS_CMD    = 'git status package.json -s'
+const PKG_STATUS     = ChildProcess.execSync(PKG_STS_CMD)
+                        .toString().replace('\n','').trim()   
+const CL_STS_CMD     = 'git status CHANGELOG.md -s'
+const CL_STATUS      = ChildProcess.execSync(CL_STS_CMD)
+                        .toString().replace('\n','').trim()                                          
+
+const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
+  return y.option(shortFlag, {
+    alias:    VersionFlagMap[shortFlag],
+    describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
+    type:     'boolean'
+  })
+}, require('yargs'))
+  .option('type', {
+    describe: 'The SemVer version type such as "patch" that you want to publish to NPM with',
+    type:     'string'
+  })
+  .option('ls', {
+    alias:    'l',
+    describe: 'Prints the files and directories that will and won\'t be published',
+    type:     'boolean'
+  })
+  .option('repo-type', {
+    alias:    'r',
+    describe: 'The remote repository type such as "stash"',
+    default:  'github',
+    type:     'string'
+  })
+  .option('publish', {
+    alias:    'pb',
+    describe: 'Sets whether or not the package is published to NPM (negate with --no-publish)',
+    default:  true,
+    type:     'boolean'
+  })
+  .option('push', {
+    alias:    'ps',
+    describe: 'Sets whether or not the package is pushed to a git remote (negate with --no-push)',
+    default:  true,
+    type:     'boolean'
+  })
+  .option('ghpages-deploy', {
+    alias:    'gh',
+    describe: 'Deploy gh-pages',
+    type:     'boolean'
+  })
+  .option('ghpages-path', {
+    alias:    'ghp',
+    describe: 'The glob path to deploy to gh-pages',
+    default:  './docs/**/*',
+    type:     'string'
+  })
+  .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
+  .alias('list-publishables', 'ls')
+  .help('h').alias('h', 'help')
+  .argv
+
+unleash.CURRENT_SHA = CURRENT_SHA
+unleash.PKG_STATUS = PKG_STATUS
+unleash.CL_STATUS = CL_STATUS
+
+isDryRun = !!unleash.dryRun
+
+const repoType = unleash.repoType
+
+if (unleash.gh) {
+  ghp = unleash.ghp 
+}
+
+// Kray Kray McFadden ish to fake mutually exclusive arguments
+// See https://github.com/bcoe/yargs/issues/275
+shortVersionFlags.forEach(function (key) {
+  if (unleash[key]) {
+    if (unleash.type) {
+      throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
+    }
+
+    unleash.type = VersionFlagMap[key]
+  }
+})
+
+const versionType = unleash.type
+
+const taskManagerInternalsSentinel = Symbol('__internals__')
+
+const taskInternals = taskManager[taskManagerInternalsSentinel] = {
+  log : fancyLog
+}
+
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
-  log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
-
+  
   if (isDryRun === true) {
+    taskInternals.log(
+      '* Creating a changelog entry for version ' + nextVersion + ' with links to the commits on ' + repoType
+    )
     return done()
   } else {
+    taskInternals.log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
     return writeChangelog({
       version  : nextVersion,
       repoType : repoType
@@ -69,27 +165,40 @@ taskManager.task('ls', function () {
   return ls()
 })
 
-taskManager.task(CHANGELOG_COMMIT, function () {
+taskManager.task(CHANGELOG_COMMIT, function (done) {
+  const docsCommit = 'docs(CHANGELOG): Update changelog'
+
   if (isDryRun) {
-    return true
+    taskInternals.log('* Adding commit "' + docsCommit + '"')
+    return done()
   } else {
     // TODO - allow configuration of this src?
     return vinylFS.src([ '*.md' ])
              .pipe(git.add())
-             .pipe(git.commit('docs(CHANGELOG): Update changelog'))
+             .pipe(git.commit(docsCommit))
   }
 })
 
-taskManager.task(GH_PAGES_DEPLOY, function (options) {
-  log('Deploying to gh-pages from ' + options.path)
-
+taskManager.task(GH_PAGES_DEPLOY, function (done) {
   if (isDryRun) {
-    return true
+    taskInternals.log('* Pushing a gh-pages branch from the contents of "' + ghp + '"')
+    return done ? done() : true
   } else {
-    return vinylFS.src([ options.path ])
+    taskInternals.log('Deploying to gh-pages from ' + ghp)
+    return vinylFS.src([ ghp ])
              .pipe(ghPages())
   }
 })
+
+function dryRunStartGh (done) {
+  taskInternals.log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+  return done()
+}
+
+taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
+  dryRunStartGh,
+  GH_PAGES_DEPLOY
+]))
 
 // bump:major, bump:minor, bump:patch
 ; versionTypes.forEach(function (bumpType) {
@@ -98,7 +207,7 @@ taskManager.task(GH_PAGES_DEPLOY, function (options) {
     bumpTaskName   = bumperize(bumpType)
 
   function noTrial () {
-    return deployWithBump({ dryRun : false })
+    return deployWithBump(merge({ dryRun : false }, unleash))
   }
 
   taskManager.task(bumpTaskName, taskManager.series([
@@ -109,100 +218,88 @@ taskManager.task(GH_PAGES_DEPLOY, function (options) {
   taskManager.task(join(CHANGELOG_WRITE, bumpType), taskManager.series([ CHANGELOG_WRITE ]))
 
   function dryRun () {
-    return deployWithBump({ dryRun: true })
+    return deployWithBump(merge({ dryRun : true }, unleash))
+  }
+
+  function dryRunStart (done) {
+    const nextVersion = Deploy.getNextVersion(versionType)
+    taskInternals.log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+    taskInternals.log('* Incrementing to the next "' + bumpType + '" semantic version, "' + nextVersion + '"')
+
+    return done()
   }
 
   return taskManager.task(join(bumpTaskName, DRY_RUN), taskManager.series([
+    dryRunStart,
     CHANGELOG_WRITE,
     CHANGELOG_COMMIT,
     dryRun
   ]))
 })
 
+// Don't automatically run tasks based on argv unless we're run via a CLI
 if (!module.parent) {
-  log(colors.yellow('=== UNLEASH ==='))
+  taskInternals.log(colors.yellow('=== UNLEASH ==='))
 
-  const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
-    return y.option(shortFlag, {
-      alias:    VersionFlagMap[shortFlag],
-      describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
-      type:     'boolean'
-    })
-  }, require('yargs'))
-    .option('type', {
-      describe: 'The SemVer version type such as "patch"',
-      type:     'string'
-    })
-    .option('ls', {
-      alias:    'l',
-      describe: 'Prints the files and directories that will and won\'t be published',
-      type:     'boolean'
-    })
-    .option('repo-type', {
-      alias:    'r',
-      describe: 'The remote repository type such as "stash"',
-      default:  'github',
-      type:     'string'
-    })
-    .option('ghpages-deploy', {
-      alias:    'gh',
-      describe: 'Deploy gh-pages',
-      type:     'boolean'
-    })
-    .option('ghpages-path', {
-      alias:    'ghp',
-      describe: 'The glob path to deploy to gh-pages',
-      default:  './docs/**/*',
-      type:     'string'
-    })
-    .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
-    .alias('list-publishables', 'ls')
-    .help('h').alias('h', 'help')
-    .argv
+  const command = process.argv.slice(1).map(function (a) {
+    return a.split('/').reverse()[0]
+  }).join(' ')
+  const wut = 'What did you want me to dry run?'
+  const noType = 'Need a semantic version type homie...' 
+  const fakeBumpType = 'semantic-version-type-should-be-here'
 
-  // Kray Kray McFadden ish to fake mutually exclusive arguments
-  // See https://github.com/bcoe/yargs/issues/275
-  shortVersionFlags.forEach(function (key) {
-    if (unleash[key]) {
-      if (unleash.type) {
-        throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
-      }
+  function logFlagCommand () {
+    return taskInternals.log.error('Run "unleash --help" to discover available flags')
+  }
 
-      unleash.type = VersionFlagMap[key]
-    }
-  })
+  function logCorrectedCommand (flag) {
+    return taskInternals.log.error(command + ' --' + colors.bgGreen(colors.white(flag)))
+  }
 
   if (unleash.type) {
-    if (unleash.ls) {
+    if (unleash.ls)
       ls()
-    }
 
     if (unleash.gh) {
       const task = taskManager.task(GH_PAGES_DEPLOY)
-      task({ path : unleash.ghp })
+      task()
     }
 
     let taskName = bumperize(unleash.type)
-    versionType = unleash.type
-    repoType = unleash.repoType
 
-    if (unleash.dryRun) {
-      isDryRun = true
+    if (isDryRun) 
       taskName = join(taskName, DRY_RUN)
-      log('Utilizing dry run mode')
-    }
 
     const task = taskManager.task(taskName)
-    task()
+    task(unleash)
   } else if (unleash.ls) {
     const task = taskManager.task('ls')
     task()
   } else if (unleash.gh) {
-    const task = taskManager.task(GH_PAGES_DEPLOY)
-    task({ path : unleash.ghp })
+    ghp = unleash.ghp 
+    const task = taskManager.task(isDryRun ? join(GH_PAGES_DEPLOY, DRY_RUN) : GH_PAGES_DEPLOY)
+    task()
+  } else if (!unleash.publish) {
+    const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noType))
+
+    taskInternals.log.error(errorMessage)
+    logCorrectedCommand(fakeBumpType)
+    logFlagCommand()
+  } else if (!unleash.push) {
+    const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noType))
+
+    taskInternals.log.error(errorMessage)
+    logCorrectedCommand(fakeBumpType)
+    logFlagCommand()
   } else {
-    throw new Error('Need a task homie')
+    const noTask = 'Need a task homie...' 
+    const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noTask))
+
+    taskInternals.log.error(errorMessage)
+    logCorrectedCommand('flag-name-should-be-here')
+    logFlagCommand()
   }
 }
 
 module.exports = taskManager
+module.exports.taskManagerInternalsSentinel = taskManagerInternalsSentinel
