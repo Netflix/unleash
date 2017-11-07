@@ -80,7 +80,7 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   })
   .option('repo-type', {
     alias:    'r',
-    describe: 'The remote repository type such as "stash"',
+    describe: 'The remote repository type, "bitbucket" or "github"',
     default:  'github',
     type:     'string'
   })

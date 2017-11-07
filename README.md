@@ -9,7 +9,7 @@
 * Updates your changelog according to the conventional changelog spec
 * Publishes your module to NPM (optionally turned off via `--no-publish`)
 * Pushes your code and tags to git (optionally turned off via `--no-push`)
-* Supports both Github & Stash (creates links to these in your changelog)
+* Supports changelog links for both Github & Bitbucket Enterprise (formerly Stash)
 * Automatically recovers from errors by safely resetting to the git state prior to running unleash
 * Features a "dry run" mode for most commands that will allow you to preview what change unleash will make before it makes them
 * Allows you to preview what files will and won't be published to NPM (`--list-publishables`)
@@ -67,13 +67,13 @@ unleash -M --no-publish
 unleash -M --no-push
 ```
 
-#### Execute a Minor Release to a Stash Repository
+#### Execute a Minor Release to a Bitbucket Enterprise Repository
 ```
-unleash -m -r stash
+unleash -m -r bitbucket
 ```
 OR...
 ```
-unleash --minor --repo-type stash
+unleash --minor --repo-type bitbucket
 ```
 
 #### View which files will be published to NPM
