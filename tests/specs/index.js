@@ -1,3 +1,5 @@
+'use strict' // force block-scoping w/ Node < 6
+
 const spec               = require('tape')
 const unleashTaskManager = require('../../')
 
