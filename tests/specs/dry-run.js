@@ -1,5 +1,6 @@
 'use strict' // force block-scoping w/ Node < 6
 
+const includes = require('../node-4-shims').includes
 const spec = require('tape')
 
 const relativePathToUnleashIndex = '../../'
@@ -125,7 +126,7 @@ spec('The dry run task set', specOptions => {
     bumpMajorTask()
 
     setTimeout(() => {
-      equal(resetTaskLoggerAndReturnLogMessage().includes('Incrementing to the next "major" semantic version'), true)
+      equal(includes.call(resetTaskLoggerAndReturnLogMessage(), 'Incrementing to the next "major" semantic version'), true)
       endTest()
     }, 200)
   })
