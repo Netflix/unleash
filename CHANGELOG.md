@@ -1,18 +1,3 @@
-<a name="2.0.0-beta.7"></a>
-### 2.0.0-beta.7 (2017-11-07)
-
-
-#### Bug Fixes
-
-* move up version type ([32221f55](https://github.com/netflix/unleash/commit/32221f55))
-* tag module doesn't return a stream ([e8c482de](https://github.com/netflix/unleash/commit/e8c482de))
-
-
-#### Features
-
-* di for logging ([b3294e8b](https://github.com/netflix/unleash/commit/b3294e8b))
-
-
 <a name="2.0.0-beta.6"></a>
 ### 2.0.0-beta.6 (2017-10-26)
 
