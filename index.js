@@ -9,7 +9,7 @@ const
   ChildProcess   = require('child_process'),
   Undertaker     = require('undertaker'),
   colors         = require('chalk'),
-  log            = require('fancy-log'),
+  fancyLog       = require('fancy-log'),
   git            = require('gulp-git'),
   merge          = require('lodash.merge'),
   values         = require('object-values'),
@@ -72,7 +72,7 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   })
 }, require('yargs'))
   .option('type', {
-    describe: 'The SemVer version type such as "patch"',
+    describe: 'The SemVer version type such as "patch" that you want to publish to NPM with',
     type:     'string'
   })
   .option('ls', {
@@ -88,13 +88,13 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
   })
   .option('publish', {
     alias:    'pb',
-    describe: 'Sets whether or not the package is published to NPM',
+    describe: 'Sets whether or not the package is published to NPM (negate with --no-publish)',
     default:  true,
     type:     'boolean'
   })
   .option('push', {
     alias:    'ps',
-    describe: 'Sets whether or not the package is pushed to a git remote',
+    describe: 'Sets whether or not the package is pushed to a git remote (negate with --no-push)',
     default:  true,
     type:     'boolean'
   })
@@ -118,16 +118,22 @@ unleash.CURRENT_SHA = CURRENT_SHA
 unleash.PKG_STATUS = PKG_STATUS
 unleash.CL_STATUS = CL_STATUS
 
+const taskManagerInternalsSentinel = Symbol('__internals__')
+
+const taskInternals = taskManager[taskManagerInternalsSentinel] = {
+  log : fancyLog
+}
+
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
   
   if (isDryRun === true) {
-    log(
+    taskInternals.log(
       '* Creating a changelog entry for version ' + nextVersion + ' with links to the commits on ' + repoType
     )
     return done()
   } else {
-    log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
+    taskInternals.log('Utilizing next version for changelog: ', colors.magenta(nextVersion))
     return writeChangelog({
       version  : nextVersion,
       repoType : repoType
@@ -143,7 +149,7 @@ taskManager.task(CHANGELOG_COMMIT, function (done) {
   const docsCommit = 'docs(CHANGELOG): Update changelog'
 
   if (isDryRun) {
-    log('* Adding commit "' + docsCommit + '"')
+    taskInternals.log('* Adding commit "' + docsCommit + '"')
     return done()
   } else {
     // TODO - allow configuration of this src?
@@ -155,17 +161,17 @@ taskManager.task(CHANGELOG_COMMIT, function (done) {
 
 taskManager.task(GH_PAGES_DEPLOY, function (done) {
   if (isDryRun) {
-    log('* Pushing a gh-pages branch from the contents of "' + ghp + '"')
+    taskInternals.log('* Pushing a gh-pages branch from the contents of "' + ghp + '"')
     return done ? done() : true
   } else {
-    log('Deploying to gh-pages from ' + ghp)
+    taskInternals.log('Deploying to gh-pages from ' + ghp)
     return vinylFS.src([ ghp ])
              .pipe(ghPages())
   }
 })
 
 function dryRunStartGh (done) {
-  log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+  taskInternals.log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
   return done()
 }
 
@@ -197,8 +203,8 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 
   function dryRunStart (done) {
     const nextVersion = Deploy.getNextVersion(versionType)
-    log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
-    log('* Incrementing to the next "' + bumpType + '" semantic version, "' + nextVersion + '"')
+    taskInternals.log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+    taskInternals.log('* Incrementing to the next "' + bumpType + '" semantic version, "' + nextVersion + '"')
 
     return done()
   }
@@ -212,7 +218,7 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 })
 
 if (!module.parent) {
-  log(colors.yellow('=== UNLEASH ==='))
+  taskInternals.log(colors.yellow('=== UNLEASH ==='))
 
   // Kray Kray McFadden ish to fake mutually exclusive arguments
   // See https://github.com/bcoe/yargs/issues/275
@@ -238,11 +244,11 @@ if (!module.parent) {
   const fakeBumpType = 'semantic-version-type-should-be-here'
 
   function logFlagCommand () {
-    return log.error('Run "unleash --help" to discover available flags')
+    return taskInternals.log.error('Run "unleash --help" to discover available flags')
   }
 
   function logCorrectedCommand (flag) {
-    return log.error(command + ' --' + colors.bgGreen(colors.white(flag)))
+    return taskInternals.log.error(command + ' --' + colors.bgGreen(colors.white(flag)))
   }
 
   if (unleash.type) {
@@ -275,23 +281,24 @@ if (!module.parent) {
   } else if (!unleash.publish) {
     const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noType))
 
-    log.error(errorMessage)
+    taskInternals.log.error(errorMessage)
     logCorrectedCommand(fakeBumpType)
     logFlagCommand()
   } else if (!unleash.push) {
     const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noType))
 
-    log.error(errorMessage)
+    taskInternals.log.error(errorMessage)
     logCorrectedCommand(fakeBumpType)
     logFlagCommand()
   } else {
     const noTask = 'Need a task homie...' 
     const errorMessage = colors.bgRed(colors.white(isDryRun ? wut : noTask))
 
-    log.error(errorMessage)
+    taskInternals.log.error(errorMessage)
     logCorrectedCommand('flag-name-should-be-here')
     logFlagCommand()
   }
 }
 
 module.exports = taskManager
+module.exports.taskManagerInternalsSentinel = taskManagerInternalsSentinel
