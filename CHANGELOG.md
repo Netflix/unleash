@@ -1,3 +1,12 @@
+<a name="2.0.0-beta.8"></a>
+### 2.0.0-beta.8 (2017-11-07)
+
+
+#### Bug Fixes
+
+* block scoping < 6 ([4216551b](https://github.com/netflix/unleash/commit/4216551b))
+
+
 <a name="2.0.0-beta.7"></a>
 ### 2.0.0-beta.7 (2017-11-07)
 
