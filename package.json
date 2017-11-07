@@ -3,14 +3,20 @@
   "version": "2.0.0-beta.6",
   "description": "Unleash your code into the wild yonder",
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=4.8.5"
+  },
+  "config": {
+    "lint": "./*.js ./lib/*.js --fix",
+    "testunit": "./node_modules/.bin/tape tests/specs/*.js | tap-difflet"
   },
   "scripts": {
     "doc": "esdoc -c ./esdoc.json",
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
     "prepublishOnly": "npm run test",
-    "test": "npm run lint && node --harmony ./node_modules/.bin/tape tests/specs/*.js | tap-difflet",
+    "test:unit": "node --harmony ./node_modules/.bin/tape tests/specs/*.js | tap-difflet",
+    "test": "npm run lint && npm run test:unit",
+    "test:cover": "node  --harmony ./node_modules/istanbul/lib/cli.js cover --dir=tests/coverage --report=html $npm_package_config_testunit && opn tests/coverage/index.html",
     "test:single": "tape tests/single-runner.js | tap-difflet",
     "clean": "git clean -d -f -x"
   },
@@ -31,7 +37,10 @@
     "tool",
     "npm",
     "deploy",
-    "deployment"
+    "deployment",
+    "publish",
+    "push",
+    "ghpages"
   ],
   "author": "James Womack <jwomack@netflix.com>",
   "license": "Apache-2.0",
@@ -71,11 +80,10 @@
     "esdoc-es7-plugin": "0.0.3",
     "eslint": "3.1.1",
     "eslint-config-netflix": "1.0.0-alpha.2",
+    "istanbul": "0.4.5",
     "jscs": "3.0.7",
+    "opn-cli": "3.1.0",
     "tap-difflet": "0.6.0",
     "tape": "4.6.0"
-  },
-  "config": {
-    "lint": "./*.js ./lib/*.js --fix"
   }
 }
