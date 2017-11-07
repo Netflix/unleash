@@ -62,7 +62,7 @@ spec('The dry run task set', ({ test, end : endSpec }) => {
 
     changelogWriteTask(doneCallbackWrapper.execute)
 
-    equal(resetTaskLoggerAndReturnLogMessage(), `* Creating a changelog entry for version ${Deploy.getNextVersion()} with links to the commits on github`, 'Logs that it\'d write')
+    equal(resetTaskLoggerAndReturnLogMessage(), `* Creating a changelog entry for version ${Deploy.getNextVersion('major')} with links to the commits on github`, 'Logs that it\'d write')
     equal(doneCallbackWrapper.callCount, 1, 'The "done" callback is invoked once')
     
     endTest()

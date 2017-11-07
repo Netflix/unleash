@@ -110,7 +110,6 @@ unleash.CURRENT_SHA = CURRENT_SHA
 
 isDryRun = !!unleash.dryRun
 
-const versionType = unleash.type
 const repoType = unleash.repoType
 
 if (unleash.gh) {
@@ -128,6 +127,8 @@ shortVersionFlags.forEach(function (key) {
     unleash.type = VersionFlagMap[key]
   }
 })
+
+const versionType = unleash.type
 
 const taskManagerInternalsSentinel = Symbol('__internals__')
 
