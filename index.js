@@ -124,12 +124,21 @@ if (unleash.gh) {
   ghp = unleash.ghp 
 }
 
+
+const taskManagerInternalsSentinel = Symbol('__internals__')
+
+const taskInternals = taskManager[taskManagerInternalsSentinel] = {
+  log : fancyLog
+}
+
 // Kray Kray McFadden ish to fake mutually exclusive arguments
 // See https://github.com/bcoe/yargs/issues/275
 shortVersionFlags.forEach(function (key) {
   if (unleash[key]) {
     if (unleash.type) {
-      throw new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
+      const error = new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
+      taskInternals.log.error(colors.bgRed(colors.white(error)))
+      process.exit(1)
     }
 
     unleash.type = VersionFlagMap[key]
@@ -137,12 +146,6 @@ shortVersionFlags.forEach(function (key) {
 })
 
 const versionType = unleash.type
-
-const taskManagerInternalsSentinel = Symbol('__internals__')
-
-const taskInternals = taskManager[taskManagerInternalsSentinel] = {
-  log : fancyLog
-}
 
 taskManager.task(CHANGELOG_WRITE, function (done) {
   const nextVersion = Deploy.getNextVersion(versionType)
