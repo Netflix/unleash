@@ -124,7 +124,6 @@ if (unleash.gh) {
   ghp = unleash.ghp 
 }
 
-
 const taskManagerInternalsSentinel = Symbol('__internals__')
 
 const taskInternals = taskManager[taskManagerInternalsSentinel] = {
