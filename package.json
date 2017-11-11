@@ -28,10 +28,15 @@
     "unleash": "./index.js"
   },
   "keywords": [
+    "github",
+    "release",
+    "ship",
+    "code",
+    "release-it",
+    "dry-run",
     "shipit",
     "releaseit",
     "ship",
-    "release",
     "git",
     "process",
     "tool",
@@ -40,7 +45,9 @@
     "deployment",
     "publish",
     "push",
-    "ghpages"
+    "ghpages",
+    "run",
+    "tests"
   ],
   "author": "James Womack <jwomack@netflix.com>",
   "license": "Apache-2.0",
