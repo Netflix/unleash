@@ -1,3 +1,12 @@
+<a name="2.0.1"></a>
+### 2.0.1 (2017-11-11)
+
+
+#### Bug Fixes
+
+* **validation:** nicer multi-version-type msg ([86ace1c7](https://github.com/netflix/unleash/commit/86ace1c7))
+
+
 <a name="2.0.0"></a>
 ## 2.0.0 (2017-11-07)
 
