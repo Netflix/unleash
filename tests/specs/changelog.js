@@ -7,7 +7,7 @@ spec('createBitbucketEnterpriseCommitLink', specOptions => {
   const test = specOptions.test
   const endSpec = specOptions.end
 
-  test('Has a task function (well it inherits from Undertaker)', testOptions => {
+  test('Creates BB links in the changelog', testOptions => {
     const equal = testOptions.equal
     const endTest = testOptions.end
 

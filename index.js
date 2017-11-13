@@ -135,8 +135,9 @@ const taskInternals = taskManager[taskManagerInternalsSentinel] = {
 shortVersionFlags.forEach(function (key) {
   if (unleash[key]) {
     if (unleash.type) {
-      const error = new Error('You\'re confusing me! Please don\'t pass more than one version type flag')
-      taskInternals.log.error(colors.bgRed(colors.white(error)))
+      taskInternals.log(colors.yellow('=== UNLEASH ==='))
+      const errorMessage = 'You\'re confusing me! Please don\'t pass more than one version type flag'
+      taskInternals.log.error(colors.bgRed(colors.white(errorMessage)))
       process.exit(1)
     }
 
