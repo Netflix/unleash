@@ -1,5 +1,8 @@
 .publish
 npm-debug.log
 package-lock.json
+yarn.lock
 tests/coverage/
 docs
+.idea
+node_modules
