@@ -1,20 +1,19 @@
-'use strict' // force block-scoping w/ Node < 6
+'use strict'
 
 const spec = require('tape')
-const createBitbucketEnterpriseCommitLink = require('../../lib/changelog').createBitbucketEnterpriseCommitLink
+const { createBitbucketEnterpriseCommitLink } = require('../../lib/changelog')
 
-spec('createBitbucketEnterpriseCommitLink', specOptions => {
-  const test = specOptions.test
-  const endSpec = specOptions.end
+spec('createBitbucketEnterpriseCommitLink', ({ test, end }) => {
 
-  test('Creates BB links in the changelog', testOptions => {
-    const equal = testOptions.equal
-    const endTest = testOptions.end
+  test('Creates BB links in the changelog', ({ equal, end: endTest }) => {
 
     equal(typeof createBitbucketEnterpriseCommitLink, 'function')
-    equal(createBitbucketEnterpriseCommitLink()('acognaoiuc'), '[acognaoi](https://github.com/netflix/unleash/commits/acognaoi)')
+    equal(
+        createBitbucketEnterpriseCommitLink()('acognaoiuc'),
+        '[acognaoi](https://github.com/netflix/unleash/commits/acognaoi)'
+    )
     endTest()
   })
 
-  endSpec()
+  end()
 })
