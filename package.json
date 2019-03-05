@@ -3,7 +3,7 @@
   "version": "2.0.1",
   "description": "Unleash your code into the wild yonder",
   "engines": {
-    "node": ">=4.8.5"
+    "node": ">=8.12.0"
   },
   "config": {
     "lint": "./*.js ./lib/*.js --fix",
@@ -68,7 +68,7 @@
     "lodash.partial": "3.1.1",
     "lodash.template": "3.6.2",
     "nf-conventional-changelog": "1.0.0",
-    "npm-check": "4.1.2",
+    "npm": "^6.8.0",
     "object-values": "1.0.0",
     "paqman": "1.0.0",
     "readable-stream": "2.1.4",
@@ -87,6 +87,7 @@
     "eslint-config-netflix": "1.0.0-alpha.2",
     "istanbul": "0.4.5",
     "jscs": "3.0.7",
+    "npm-check": "^5.9.0",
     "opn-cli": "3.1.0",
     "tap-difflet": "0.6.0",
     "tape": "4.6.0"
