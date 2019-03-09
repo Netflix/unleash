@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-   - "6.17.0"
-   - "7.7.3"
-   - "8.2.1"
-   - "9.0.0"
-   - "10.15.2"
+   - '6'
+   - '8'
+   - '10'
+   - "lts/*"                # Active LTS release
+   - "node"                 # Latest stable release
