@@ -4,14 +4,8 @@
 
 #### Bug Fixes
 
-* exp. w/ using global npm ([9082b7df](https://github.com/netflix/unleash/commit/9082b7df))
-* **CHANGELOG:** Use Netflix fork of CCL ([bd4eeedb](https://github.com/netflix/unleash/commit/bd4eeedb))
 * **deploy:** #17 - deploy with node 9 and above ([e80d3b1b](https://github.com/netflix/unleash/commit/e80d3b1b))
 * **deps:** security & compat. updates ([2c121787](https://github.com/netflix/unleash/commit/2c121787))
-* **dryrun:**
-  * Initialize isDryRun with yargs ([5b990595](https://github.com/netflix/unleash/commit/5b990595))
-  * Prevent filestream from executing ([d16baf1a](https://github.com/netflix/unleash/commit/d16baf1a))
-* **semver:** Fix pkg path issue ([b4c96c70](https://github.com/netflix/unleash/commit/b4c96c70))
 
 
 #### Features
