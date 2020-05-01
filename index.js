@@ -73,7 +73,7 @@ const unleash = shortVersionFlags.reduce((y, shortFlag) => {
     describe: 'The SemVer version type such as "patch" that you want to publish to NPM with',
     type:     'string'
   })
-  .option('ls', {
+  .option('list-publishables', {
     alias:    'l',
     describe: 'Prints the files and directories that will and won\'t be published',
     type:     'boolean'
@@ -107,8 +107,13 @@ const unleash = shortVersionFlags.reduce((y, shortFlag) => {
     default:  './docs/**/*',
     type:     'string'
   })
-  .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
-  .alias('list-publishables', 'ls')
+  .option(DRY_RUN_LONG_FLAG, {
+    alias:    DRY_RUN_SHORT_FLAG,
+    describe: 'Sets whether or not the process should be previewed rather than destructively executed',
+    default:  false,
+    type:     'boolean'
+  })
+  .alias('ls', 'l')
   .help('h').alias('h', 'help')
   .argv
 
