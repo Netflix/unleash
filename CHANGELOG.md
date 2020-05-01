@@ -1,3 +1,13 @@
+<a name="2.0.2"></a>
+### 2.0.2 (2020-04-30)
+
+
+#### Bug Fixes
+
+* **deploy:** #17 - deploy with node 9 and above ([e80d3b1b](https://github.com/netflix/unleash/commit/e80d3b1b))
+* **deps:** security & compat. updates ([2c121787](https://github.com/netflix/unleash/commit/2c121787))
+
+
 <a name="2.0.1"></a>
 ### 2.0.1 (2017-11-11)
 

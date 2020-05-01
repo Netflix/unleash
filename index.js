@@ -40,7 +40,7 @@ const VersionFlagMap = {
 }
 
 function join (a, b) {
-  return a + ':' + b
+  return `${a}:${b}`
 }
 
 function bumperize (bumpType) {
@@ -54,18 +54,18 @@ const taskManager       = new Undertaker
 
 const REF_SHA_CMD    = 'git rev-parse --verify HEAD'
 const CURRENT_SHA    = ChildProcess.execSync(REF_SHA_CMD)
-                        .toString().replace('\n','')
+  .toString().replace('\n','')
 const PKG_STS_CMD    = 'git status package.json -s'
 const PKG_STATUS     = ChildProcess.execSync(PKG_STS_CMD)
-                        .toString().replace('\n','').trim()   
+  .toString().replace('\n','').trim()   
 const CL_STS_CMD     = 'git status CHANGELOG.md -s'
 const CL_STATUS      = ChildProcess.execSync(CL_STS_CMD)
-                        .toString().replace('\n','').trim()                                          
+  .toString().replace('\n','').trim()                                          
 
-const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
+const unleash = shortVersionFlags.reduce((y, shortFlag) => {
   return y.option(shortFlag, {
     alias:    VersionFlagMap[shortFlag],
-    describe: 'Alias for --type=' + VersionFlagMap[shortFlag],
+    describe: `Alias for --type=${VersionFlagMap[shortFlag]}`,
     type:     'boolean'
   })
 }, require('yargs'))
@@ -73,7 +73,7 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
     describe: 'The SemVer version type such as "patch" that you want to publish to NPM with',
     type:     'string'
   })
-  .option('ls', {
+  .option('list-publishables', {
     alias:    'l',
     describe: 'Prints the files and directories that will and won\'t be published',
     type:     'boolean'
@@ -107,8 +107,13 @@ const unleash = shortVersionFlags.reduce(function (y, shortFlag) {
     default:  './docs/**/*',
     type:     'string'
   })
-  .alias(DRY_RUN_SHORT_FLAG, DRY_RUN_LONG_FLAG)
-  .alias('list-publishables', 'ls')
+  .option(DRY_RUN_LONG_FLAG, {
+    alias:    DRY_RUN_SHORT_FLAG,
+    describe: 'Sets whether or not the process should be previewed rather than destructively executed',
+    default:  false,
+    type:     'boolean'
+  })
+  .alias('ls', 'l')
   .help('h').alias('h', 'help')
   .argv
 
@@ -120,9 +125,9 @@ isDryRun = !!unleash.dryRun
 
 const repoType = unleash.repoType
 
-if (unleash.gh) {
+if (unleash.gh) 
   ghp = unleash.ghp 
-}
+
 
 const taskManagerInternalsSentinel = Symbol('__internals__')
 
@@ -132,7 +137,7 @@ const taskInternals = taskManager[taskManagerInternalsSentinel] = {
 
 // Kray Kray McFadden ish to fake mutually exclusive arguments
 // See https://github.com/bcoe/yargs/issues/275
-shortVersionFlags.forEach(function (key) {
+shortVersionFlags.forEach((key) => {
   if (unleash[key]) {
     if (unleash.type) {
       taskInternals.log(colors.yellow('=== UNLEASH ==='))
@@ -147,12 +152,12 @@ shortVersionFlags.forEach(function (key) {
 
 const versionType = unleash.type
 
-taskManager.task(CHANGELOG_WRITE, function (done) {
+taskManager.task(CHANGELOG_WRITE, (done) => {
   const nextVersion = Deploy.getNextVersion(versionType)
   
   if (isDryRun === true) {
     taskInternals.log(
-      '* Creating a changelog entry for version ' + nextVersion + ' with links to the commits on ' + repoType
+      `* Creating a changelog entry for version ${nextVersion} with links to the commits on ${repoType}`
     )
     return done()
   } else {
@@ -164,37 +169,37 @@ taskManager.task(CHANGELOG_WRITE, function (done) {
   }
 })
 
-taskManager.task('ls', function () {
+taskManager.task('ls', () => {
   return ls()
 })
 
-taskManager.task(CHANGELOG_COMMIT, function (done) {
+taskManager.task(CHANGELOG_COMMIT, (done) => {
   const docsCommit = 'docs(CHANGELOG): Update changelog'
 
   if (isDryRun) {
-    taskInternals.log('* Adding commit "' + docsCommit + '"')
+    taskInternals.log(`* Adding commit "${docsCommit}"`)
     return done()
-  } else {
+  } else 
     // TODO - allow configuration of this src?
     return vinylFS.src([ '*.md' ])
-             .pipe(git.add())
-             .pipe(git.commit(docsCommit))
-  }
+      .pipe(git.add())
+      .pipe(git.commit(docsCommit))
+  
 })
 
-taskManager.task(GH_PAGES_DEPLOY, function (done) {
+taskManager.task(GH_PAGES_DEPLOY, (done) => {
   if (isDryRun) {
-    taskInternals.log('* Pushing a gh-pages branch from the contents of "' + ghp + '"')
+    taskInternals.log(`* Pushing a gh-pages branch from the contents of "${ghp}"`)
     return done ? done() : true
   } else {
-    taskInternals.log('Deploying to gh-pages from ' + ghp)
+    taskInternals.log(`Deploying to gh-pages from ${ghp}`)
     return vinylFS.src([ ghp ])
-             .pipe(ghPages())
+      .pipe(ghPages())
   }
 })
 
 function dryRunStartGh (done) {
-  taskInternals.log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
+  taskInternals.log(`Utilizing ${colors.magenta('dry run mode')}. This is a dry run of the following actions:`)
   return done()
 }
 
@@ -204,7 +209,7 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 ]))
 
 // bump:major, bump:minor, bump:patch
-; versionTypes.forEach(function (bumpType) {
+versionTypes.forEach((bumpType) => {
   const options    = { bumpType: bumpType },
     deployWithBump = Deploy.withBumpType.bind(Deploy, options),
     bumpTaskName   = bumperize(bumpType)
@@ -226,8 +231,8 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 
   function dryRunStart (done) {
     const nextVersion = Deploy.getNextVersion(versionType)
-    taskInternals.log('Utilizing ' + colors.magenta('dry run mode') + '. This is a dry run of the following actions:')
-    taskInternals.log('* Incrementing to the next "' + bumpType + '" semantic version, "' + nextVersion + '"')
+    taskInternals.log(`Utilizing ${colors.magenta('dry run mode')}. This is a dry run of the following actions:`)
+    taskInternals.log(`* Incrementing to the next "${bumpType}" semantic version, "${nextVersion}"`)
 
     return done()
   }
@@ -244,7 +249,7 @@ taskManager.task(join(GH_PAGES_DEPLOY, DRY_RUN), taskManager.series([
 if (!module.parent) {
   taskInternals.log(colors.yellow('=== UNLEASH ==='))
 
-  const command = process.argv.slice(1).map(function (a) {
+  const command = process.argv.slice(1).map((a) => {
     return a.split('/').reverse()[0]
   }).join(' ')
   const wut = 'What did you want me to dry run?'
@@ -256,7 +261,7 @@ if (!module.parent) {
   }
 
   function logCorrectedCommand (flag) {
-    return taskInternals.log.error(command + ' --' + colors.bgGreen(colors.white(flag)))
+    return taskInternals.log.error(`${command} --${colors.bgGreen(colors.white(flag))}`)
   }
 
   if (unleash.type) {
