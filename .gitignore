@@ -3,6 +3,7 @@ npm-debug.log
 package-lock.json
 yarn.lock
 tests/coverage/
+.nyc_output/
 docs
 .idea
 node_modules
