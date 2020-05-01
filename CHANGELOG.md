@@ -8,11 +8,6 @@
 * **deps:** security & compat. updates ([2c121787](https://github.com/netflix/unleash/commit/2c121787))
 
 
-#### Features
-
-* **cli:** Add header ([cc3f1fd3](https://github.com/netflix/unleash/commit/cc3f1fd3))
-
-
 <a name="2.0.1"></a>
 ### 2.0.1 (2017-11-11)
 
