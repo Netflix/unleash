@@ -1,6 +1,6 @@
 {
   "name": "unleash",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Unleash your code into the wild yonder",
   "engines": {
     "node": ">=6.17.0"
